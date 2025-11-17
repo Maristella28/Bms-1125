@@ -140,6 +140,7 @@ const SocialServices = () => {
 
   const handleAddProgramClick = () => {
     setEditProgram({});
+    setEditingProgram(null); // Reset editing program when adding new
     setProgramForm({
       name: '',
       description: '',
@@ -198,6 +199,7 @@ const SocialServices = () => {
   const handleProgramModalClose = () => {
     setShowProgramModal(false);
     setAddProgramMode(false);
+    setEditingProgram(null); // Reset editing program when closing modal
     setProgramFormError('');
     setProgramFormSuccess('');
   };
@@ -396,6 +398,8 @@ const SocialServices = () => {
   const handleEditProgramClick = (program) => {
     console.log('Editing program:', program); // Debug log
     setEditingProgram(program);
+    setAddProgramMode(false); // Set to false when editing
+    setEditProgram(program); // Also set editProgram for backward compatibility
     
     // Helper function to format dates for form inputs
     const formatDateForInput = (dateString) => {
@@ -420,7 +424,8 @@ const SocialServices = () => {
       }
     };
     
-    setProgramFormData({
+    // Use programForm state instead of programFormData
+    setProgramForm({
       name: program.name || '',
       description: program.description || '',
       startDate: formatDateForInput(program.start_date),
@@ -428,10 +433,12 @@ const SocialServices = () => {
       status: program.status || 'active',
       beneficiaryType: program.beneficiary_type || '',
       assistanceType: program.assistance_type || '',
-      budget: program.amount || '',
+      amount: program.amount || '',
       maxBeneficiaries: program.max_beneficiaries || '',
       payoutDate: formatDateTimeForInput(program.payout_date)
     });
+    setProgramFormError('');
+    setProgramFormSuccess('');
     setShowProgramModal(true);
   };
 
@@ -3806,8 +3813,8 @@ const SocialServices = () => {
                         let payoutDateChanged = false;
                         let newPayoutDate = null;
                         
-                        if (editProgram && editProgram.id) {
-                          const originalPayoutDate = editProgram.payout_date || editProgram.payoutDate;
+                        if (editingProgram && editingProgram.id) {
+                          const originalPayoutDate = editingProgram.payout_date || editingProgram.payoutDate;
                           newPayoutDate = programForm.payoutDate;
                           payoutDateChanged = originalPayoutDate !== newPayoutDate;
                           
@@ -3818,13 +3825,13 @@ const SocialServices = () => {
                             hasNewPayoutDate: !!newPayoutDate
                           });
                           
-                          await axios.put(`/admin/programs/${editProgram.id}`, data);
+                          await axios.put(`/admin/programs/${editingProgram.id}`, data);
                           
                           // Send email notification if payout date changed
                           if (payoutDateChanged && newPayoutDate) {
                             console.log('Sending payout change notification...');
                             try {
-                              const notificationResponse = await axios.post(`/api/admin/programs/${editProgram.id}/notify-payout-change`, {
+                              const notificationResponse = await axios.post(`/api/admin/programs/${editingProgram.id}/notify-payout-change`, {
                                 new_payout_date: newPayoutDate,
                                 program_name: programForm.name
                               });
@@ -3850,13 +3857,14 @@ const SocialServices = () => {
                           await axios.post('/admin/programs', data);
                         }
                         
-                        const successMessage = editProgram && editProgram.id ? 'Program updated successfully!' : 'Program added successfully!';
+                        const successMessage = editingProgram && editingProgram.id ? 'Program updated successfully!' : 'Program added successfully!';
                         if (payoutDateChanged && newPayoutDate) {
                           setProgramFormSuccess(successMessage + ' Email notifications sent to all beneficiaries.');
                         } else {
                           setProgramFormSuccess(successMessage);
                         }
                         setShowProgramModal(false);
+                        setEditingProgram(null); // Reset editing program after successful save
                         setProgramForm({ name: '', description: '', startDate: '', endDate: '', status: '', beneficiaryType: '', assistanceType: '', amount: '', maxBeneficiaries: '', payoutDate: '' });
                         
                         // Refresh programs list
@@ -3864,7 +3872,7 @@ const SocialServices = () => {
                         setPrograms(updatedPrograms);
                       } catch (err) {
                         console.error('Error saving program:', err);
-                        setProgramFormError((editProgram && editProgram.id ? 'Failed to update program. ' : 'Failed to add program. ') + (err?.response?.data?.message || err?.message || ''));
+                        setProgramFormError((editingProgram && editingProgram.id ? 'Failed to update program. ' : 'Failed to add program. ') + (err?.response?.data?.message || err?.message || ''));
                       } finally {
                         setProgramFormLoading(false);
                       }
