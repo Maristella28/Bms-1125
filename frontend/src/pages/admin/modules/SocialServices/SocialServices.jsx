@@ -3115,18 +3115,149 @@ const SocialServices = () => {
                 </button>
               </div>
 
-              {/* Enhanced Program Cards */}
-        <SocialCards 
-          programs={programs}
-          getBeneficiariesByProgram={getBeneficiariesByProgram}
-          formatCurrency={formatCurrency}
-          formatDate={formatDate}
-          formatDateRange={formatDateRange}
-          handleDeleteProgram={handleDeleteProgram}
-          handleEditProgramClick={handleEditProgramClick}
-          getEffectiveProgramStatus={getEffectiveProgramStatus}
-          areAllBeneficiariesPaid={areAllBeneficiariesPaid}
-            />
+              {/* Group Programs by Status */}
+              {(() => {
+                // Group programs by their effective status
+                const programsByStatus = {
+                  ongoing: [],
+                  complete: [],
+                  draft: [],
+                  active: []
+                };
+
+                programs.forEach(program => {
+                  const effectiveStatus = getEffectiveProgramStatus(program);
+                  if (effectiveStatus === 'ongoing' || effectiveStatus === 'active') {
+                    programsByStatus.ongoing.push(program);
+                  } else if (effectiveStatus === 'complete') {
+                    programsByStatus.complete.push(program);
+                  } else {
+                    programsByStatus.draft.push(program);
+                  }
+                });
+
+                return (
+                  <div className="space-y-12">
+                    {/* Ongoing Programs Section */}
+                    {programsByStatus.ongoing.length > 0 && (
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-1 h-12 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full"></div>
+                            <div>
+                              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                                  <ClockIcon className="w-6 h-6 text-white" />
+                                </div>
+                                Ongoing Programs
+                              </h2>
+                              <p className="text-gray-600 text-sm sm:text-base mt-1">
+                                {programsByStatus.ongoing.length} active program{programsByStatus.ongoing.length !== 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <SocialCards 
+                          programs={programsByStatus.ongoing}
+                          getBeneficiariesByProgram={getBeneficiariesByProgram}
+                          formatCurrency={formatCurrency}
+                          formatDate={formatDate}
+                          formatDateRange={formatDateRange}
+                          handleDeleteProgram={handleDeleteProgram}
+                          handleEditProgramClick={handleEditProgramClick}
+                          getEffectiveProgramStatus={getEffectiveProgramStatus}
+                          areAllBeneficiariesPaid={areAllBeneficiariesPaid}
+                        />
+                      </div>
+                    )}
+
+                    {/* Completed Programs Section */}
+                    {programsByStatus.complete.length > 0 && (
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-1 h-12 bg-gradient-to-b from-emerald-500 to-green-600 rounded-full"></div>
+                            <div>
+                              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg">
+                                  <CheckCircleIcon className="w-6 h-6 text-white" />
+                                </div>
+                                Completed Programs
+                              </h2>
+                              <p className="text-gray-600 text-sm sm:text-base mt-1">
+                                {programsByStatus.complete.length} completed program{programsByStatus.complete.length !== 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <SocialCards 
+                          programs={programsByStatus.complete}
+                          getBeneficiariesByProgram={getBeneficiariesByProgram}
+                          formatCurrency={formatCurrency}
+                          formatDate={formatDate}
+                          formatDateRange={formatDateRange}
+                          handleDeleteProgram={handleDeleteProgram}
+                          handleEditProgramClick={handleEditProgramClick}
+                          getEffectiveProgramStatus={getEffectiveProgramStatus}
+                          areAllBeneficiariesPaid={areAllBeneficiariesPaid}
+                          compactMode={true}
+                        />
+                      </div>
+                    )}
+
+                    {/* Draft Programs Section */}
+                    {programsByStatus.draft.length > 0 && (
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-1 h-12 bg-gradient-to-b from-gray-400 to-gray-500 rounded-full"></div>
+                            <div>
+                              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center shadow-lg">
+                                  <DocumentTextIcon className="w-6 h-6 text-white" />
+                                </div>
+                                Draft Programs
+                              </h2>
+                              <p className="text-gray-600 text-sm sm:text-base mt-1">
+                                {programsByStatus.draft.length} draft program{programsByStatus.draft.length !== 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <SocialCards 
+                          programs={programsByStatus.draft}
+                          getBeneficiariesByProgram={getBeneficiariesByProgram}
+                          formatCurrency={formatCurrency}
+                          formatDate={formatDate}
+                          formatDateRange={formatDateRange}
+                          handleDeleteProgram={handleDeleteProgram}
+                          handleEditProgramClick={handleEditProgramClick}
+                          getEffectiveProgramStatus={getEffectiveProgramStatus}
+                          areAllBeneficiariesPaid={areAllBeneficiariesPaid}
+                        />
+                      </div>
+                    )}
+
+                    {/* Empty State */}
+                    {programsByStatus.ongoing.length === 0 && 
+                     programsByStatus.complete.length === 0 && 
+                     programsByStatus.draft.length === 0 && (
+                      <div className="text-center py-16 bg-white rounded-2xl shadow-lg border border-gray-100">
+                        <DocumentTextIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-gray-700 mb-2">No Programs Found</h3>
+                        <p className="text-gray-500 mb-6">Get started by creating your first program.</p>
+                        <button
+                          className="bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-semibold transition-all duration-300 transform hover:scale-105 mx-auto"
+                          onClick={handleAddProgramClick}
+                        >
+                          <PlusIcon className="w-5 h-5" />
+                          Add New Program
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
