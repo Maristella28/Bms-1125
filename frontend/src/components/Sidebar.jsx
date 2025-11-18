@@ -39,7 +39,7 @@ import axiosInstance from '../utils/axiosConfig';
 import {
   LayoutDashboard, Users, FileText, Home, Book,
   DollarSign, UserCog, Megaphone, Handshake, AlertTriangle,
-  Boxes, Projector, Activity, ChevronDown, ChevronRight
+  Boxes, Projector, Activity, ChevronDown, ChevronRight, Server
 } from 'lucide-react';
 
 const Sidebar = ({ permissions: propPermissions = {} }) => {
@@ -252,6 +252,12 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
       icon: <Activity size={iconSize} />, 
       path: `/${userRole}/activityLogs`,
       module: "logs"
+    },
+    { 
+      title: "Backup Management", 
+      icon: <Server size={iconSize} />, 
+      path: `/${userRole}/backup`,
+      module: "backup"
     }
   ];
 
