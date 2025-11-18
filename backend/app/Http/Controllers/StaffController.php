@@ -299,22 +299,67 @@ class StaffController extends Controller
             $staff = Staff::findOrFail($id);
             
             // Validate the request data
+            // Note: module_permissions.* can be nested (e.g., residentsRecords_main_records_edit)
+            // So we validate that all values are booleans, regardless of nesting level
             $validated = $request->validate([
                 'module_permissions' => ['required', 'array'],
-                'module_permissions.*' => ['boolean'],
+                'module_permissions.*' => ['nullable'], // Allow nested arrays, we'll validate booleans manually
                 'staff_id' => ['required', 'integer', 'exists:staff,id']
             ]);
-
-            // Log the update request
-            Log::info('Received permissions update request', [
-                'staff_id' => $id,
-                'permissions' => $request->module_permissions
-            ]);
-
-            // The frontend already sends permissions in the correct backend format
-            // No additional mapping needed - just use the permissions directly
-            $incomingPermissions = $request->module_permissions;
             
+            // Recursively validate that all permission values are booleans
+            $validatePermissionsAreBoolean = function($permissions) use (&$validatePermissionsAreBoolean) {
+                foreach ($permissions as $key => $value) {
+                    if (is_array($value)) {
+                        $validatePermissionsAreBoolean($value);
+                    } else {
+                        if (!is_bool($value) && $value !== 0 && $value !== 1 && $value !== '0' && $value !== '1' && $value !== 'true' && $value !== 'false') {
+                            throw \Illuminate\Validation\ValidationException::withMessages([
+                                'module_permissions' => ["Permission '{$key}' must be a boolean value"]
+                            ]);
+                        }
+                    }
+                }
+            };
+            
+            // Flatten nested permissions and ensure all are booleans
+            $flattenPermissions = function($permissions, $prefix = '') use (&$flattenPermissions) {
+                $result = [];
+                foreach ($permissions as $key => $value) {
+                    $fullKey = $prefix ? "{$prefix}_{$key}" : $key;
+                    if (is_array($value)) {
+                        $result = array_merge($result, $flattenPermissions($value, $fullKey));
+                    } else {
+                        // Convert to boolean
+                        $result[$fullKey] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                    }
+                }
+                return $result;
+            };
+            
+            // Flatten the permissions if they're nested
+            $incomingPermissions = $request->module_permissions;
+            if (!empty($incomingPermissions) && is_array($incomingPermissions)) {
+                // Check if permissions are nested (have array values)
+                $hasNested = false;
+                foreach ($incomingPermissions as $value) {
+                    if (is_array($value)) {
+                        $hasNested = true;
+                        break;
+                    }
+                }
+                
+                if ($hasNested) {
+                    // Permissions are nested, flatten them
+                    $incomingPermissions = $flattenPermissions($incomingPermissions);
+                } else {
+                    // Permissions are already flat, just ensure they're booleans
+                    foreach ($incomingPermissions as $key => $value) {
+                        $incomingPermissions[$key] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                    }
+                }
+            }
+
             // Define all expected permission keys with default false values
             $defaultPermissions = [
                 'dashboard' => false,

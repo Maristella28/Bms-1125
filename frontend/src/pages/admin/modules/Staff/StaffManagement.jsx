@@ -35,6 +35,8 @@ const StaffManagement = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successStaffName, setSuccessStaffName] = useState('');
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [verificationData, setVerificationData] = useState(null);
   const [editingStaff, setEditingStaff] = useState(null);
@@ -256,12 +258,22 @@ const StaffManagement = () => {
         
         if (val.sub_permissions) {
           // Convert sub-permissions to flat structure for backend
-          out[apiKey] = val.access;
+          out[apiKey] = Boolean(val.access);
           Object.entries(val.sub_permissions).forEach(([subKey, subVal]) => {
-            out[`${apiKey}_${subKey}`] = subVal;
+            // Check if subVal has nested sub-permissions (e.g., main_records with edit, disable, view)
+            if (typeof subVal === 'object' && subVal !== null && subVal.sub_permissions) {
+              // Handle nested sub-permissions
+              out[`${apiKey}_${subKey}`] = Boolean(subVal.access);
+              Object.entries(subVal.sub_permissions).forEach(([nestedKey, nestedVal]) => {
+                out[`${apiKey}_${subKey}_${nestedKey}`] = Boolean(nestedVal);
+              });
+            } else {
+              // Handle simple sub-permissions (boolean)
+              out[`${apiKey}_${subKey}`] = Boolean(subVal);
+            }
           });
         } else {
-          out[apiKey] = val.access;
+          out[apiKey] = Boolean(val.access);
         }
       } else {
         // Handle legacy boolean format
@@ -277,6 +289,15 @@ const StaffManagement = () => {
         }
       }
     });
+    
+    // Ensure all values are booleans (not objects or other types)
+    Object.keys(out).forEach(key => {
+      if (typeof out[key] !== 'boolean') {
+        out[key] = Boolean(out[key]);
+      }
+    });
+    
+    console.log('Mapped UI to API permissions (flattened):', out);
     return out;
   };
 
@@ -587,6 +608,8 @@ const StaffManagement = () => {
       const currentPermissions = editingStaff.module_permissions || {};
       const formattedPermissions = mapUiToApiPermissions(currentPermissions);
 
+      console.log('Sending permissions to backend:', formattedPermissions);
+
       const response = await axiosInstance.put(`/api/admin/staff/${editingStaff.id}/permissions`, {
         module_permissions: formattedPermissions,
         staff_id: editingStaff.id
@@ -599,32 +622,45 @@ const StaffManagement = () => {
           : s
       )));
 
-      toast.success('Permissions updated successfully', {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true
-      });
-
-      // Close the modal and refresh from server to ensure persistence
+      // Store staff name before clearing editingStaff
+      const staffName = editingStaff?.name || 'the staff member';
+      
+      // Close the permissions modal
       setShowPermissionsModal(false);
       setEditingStaff(null);
+      
+      // Show success modal
+      setSuccessStaffName(staffName);
+      setShowSuccessModal(true);
+      
+      // Refresh from server to ensure persistence
       await fetchStaff();
     } catch (error) {
       console.error('Error updating permissions:', error);
+      console.error('Error response:', error.response?.data);
+      
       let errorMessage = 'An error occurred while updating permissions';
       
       if (error.response) {
-        console.error('Error response:', {
+        console.error('Error response details:', {
           data: error.response.data,
           status: error.response.status,
           headers: error.response.headers
         });
 
-        // Handle different types of error responses
-        if (error.response.status === 403) {
+        // Handle validation errors (422)
+        if (error.response.status === 422) {
+          const errors = error.response.data.errors || error.response.data.error || [];
+          if (Array.isArray(errors) && errors.length > 0) {
+            errorMessage = errors[0];
+          } else if (typeof errors === 'string') {
+            errorMessage = errors;
+          } else if (error.response.data.message) {
+            errorMessage = error.response.data.message;
+          } else {
+            errorMessage = 'Validation failed. Please check the permissions format.';
+          }
+        } else if (error.response.status === 403) {
           if (error.response.data.error === 'INSUFFICIENT_PERMISSIONS') {
             errorMessage = `Access denied: You need admin privileges to update staff permissions. Your role: ${error.response.data.user_role || 'unknown'}`;
           } else {
@@ -638,7 +674,10 @@ const StaffManagement = () => {
         }
       }
       
-      toast.error(errorMessage);
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 5000,
+      });
     }
   };
 
@@ -1778,6 +1817,32 @@ const StaffManagement = () => {
                   Create Account
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckIcon className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Permissions Updated Successfully!</h3>
+              <p className="text-gray-600 mb-6">
+                The permissions for <strong>{successStaffName}</strong> have been updated successfully.
+              </p>
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  setSuccessStaffName('');
+                }}
+                className="w-full px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
