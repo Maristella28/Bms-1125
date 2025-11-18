@@ -30,6 +30,13 @@ class Kernel extends ConsoleKernel
     // Run scheduled household surveys every 15 minutes
     // This checks for any due survey schedules and executes them
     $schedule->command('surveys:run-scheduled')->everyFifteenMinutes()->withoutOverlapping();
+
+    // Automated backup - runs daily at 2:00 AM
+    // Backs up database, storage files, and configuration
+    $schedule->command('backup:run')
+        ->dailyAt('02:00')
+        ->withoutOverlapping()
+        ->emailOutputOnFailure(env('BACKUP_EMAIL', 'admin@barangay.gov.ph'));
     }
 
     /**

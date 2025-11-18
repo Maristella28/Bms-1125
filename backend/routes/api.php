@@ -24,6 +24,7 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\ResidencyStatusController;
 use App\Http\Controllers\BeneficiaryController;
 use App\Http\Controllers\SanitizationTestController;
+use App\Http\Controllers\BackupController;
 
 /*
 |--------------------------------------------------------------------------
@@ -249,6 +250,12 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'staff', 'sanitize'])->group
     // 📝 FEEDBACK MODULE (shared)
     // ============================================
     Route::apiResource('feedbacks', App\Http\Controllers\FeedbackController::class);
+    
+    // ============================================
+    // 💾 BACKUP MODULE (Admin & Staff with permissions)
+    // ============================================
+    Route::get('/backups', [BackupController::class, 'listBackups']);
+    Route::get('/backups/statistics', [BackupController::class, 'getStatistics']);
 });
 
 // Admin-Only Routes (Staff Management, User Management, Dashboard)
@@ -261,6 +268,12 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'sanitize'])->group
     
     // 📊 Dashboard (Admin only for now - could be shared later)
     Route::get('/dashboard', [AdminController::class, 'index']);
+    
+    // ============================================
+    // 💾 BACKUP MODULE (Admin only)
+    // ============================================
+    Route::post('/backup/run', [BackupController::class, 'runBackup']);
+    Route::delete('/backup/{id}', [BackupController::class, 'deleteBackup']);
     
     // 👤 Admin Profile Management (Admin only)
     Route::get('/profile', [AdminProfileController::class, 'show']);

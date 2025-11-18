@@ -35,6 +35,7 @@ const SocialServices = lazy(() => import('./pages/admin/modules/SocialServices/S
 const DisasterEmergency = lazy(() => import('./pages/admin/DisasterEmergency'));
 const InventoryAssets = lazy(() => import('./pages/admin/InventoryAssets'));
 const ActivityLogs = lazy(() => import('./pages/admin/ActivityLogs'));
+const BackupManagement = lazy(() => import('./pages/admin/modules/backup/BackupManagement'));
 
 // Lazy load individual resident pages
 const ResidentDashboard = lazy(() => import('./pages/residents/Dashboard'));
@@ -178,6 +179,7 @@ const commonRoutesWithComponents = routeConfig.common.map(route => ({
     "disasterEmergency": withSuspense(<DisasterEmergency />),
     "inventoryAssets": withSuspense(<InventoryAssets />),
     "activityLogs": withSuspense(<ActivityLogs />),
+    "backup": withSuspense(<BackupManagement />),
     
     // Additional admin-specific route mappings
     "social-services": withSuspense(<SocialServices />),
@@ -342,6 +344,10 @@ function App() {
           
           {/* Household Management Routes */}
           <Route path="/admin/modules/Household/CreateHousehold" element={<RoleBasedRoute allowedRoles={['admin', 'staff']}><AdminRouteWrapper>{withSuspense(<CreateHousehold />)}</AdminRouteWrapper></RoleBasedRoute>} />
+          
+          {/* Backup Management Routes */}
+          <Route path="/admin/backup" element={<RoleBasedRoute allowedRoles={['admin']}><AdminRouteWrapper>{withSuspense(<BackupManagement />)}</AdminRouteWrapper></RoleBasedRoute>} />
+          <Route path="/admin/modules/backup" element={<RoleBasedRoute allowedRoles={['admin']}><AdminRouteWrapper>{withSuspense(<BackupManagement />)}</AdminRouteWrapper></RoleBasedRoute>} />
           
           {/* Dynamic Layout Routes */}
           <Route 

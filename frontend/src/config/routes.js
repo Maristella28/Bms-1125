@@ -18,6 +18,7 @@ export const routeConfig = {
     { path: "disasterEmergency", element: null, module: "command_center" },
     { path: "inventoryAssets", element: null, module: "inventory" },
     { path: "activityLogs", element: null, module: "logs" },
+    { path: "backup", element: null, module: "backup" },
     
     // Additional admin-specific routes that were missing
     { path: "social-services", element: null, module: "social_services" },
