@@ -471,26 +471,31 @@ class StaffController extends Controller
             ]);
             
             // Save the model
-            // Try using update() method to ensure the save happens
-            $saveResult = $staff->update(['module_permissions' => $finalPermissions]);
-            
-            Log::info('Staff save result', [
+            // IMPORTANT: Use direct DB update to ensure the JSON is properly encoded
+            // Laravel's array cast might not work correctly with update() in all cases
+            Log::info('About to save permissions', [
                 'staff_id' => $staff->id,
-                'save_result' => $saveResult,
-                'wasRecentlyCreated' => $staff->wasRecentlyCreated,
-                'wasChanged' => $staff->wasChanged(),
-                'getChanges' => $staff->getChanges(),
-                'dirty_attributes' => $staff->getDirty(),
+                'final_permissions_count' => count($finalPermissions),
+                'sample_keys' => array_slice(array_keys($finalPermissions), 0, 10),
+                'residentsRecords_main_records_view' => $finalPermissions['residentsRecords_main_records_view'] ?? 'NOT_SET',
             ]);
             
-            // If save() didn't work, try direct DB update as fallback
-            if (!$saveResult) {
-                Log::warning('Model save() returned false, trying direct DB update');
-                $dbUpdateResult = \DB::table('staff')
-                    ->where('id', $staff->id)
-                    ->update(['module_permissions' => json_encode($finalPermissions)]);
-                Log::info('Direct DB update result', ['result' => $dbUpdateResult]);
-            }
+            // Use direct DB update to ensure proper JSON encoding
+            // This bypasses any potential issues with Laravel's array cast
+            $jsonEncoded = json_encode($finalPermissions, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $dbUpdateResult = \DB::table('staff')
+                ->where('id', $staff->id)
+                ->update(['module_permissions' => $jsonEncoded]);
+            
+            Log::info('Direct DB update result', [
+                'staff_id' => $staff->id,
+                'update_result' => $dbUpdateResult,
+                'json_encoded_length' => strlen($jsonEncoded),
+                'residentsRecords_main_records_view_in_json' => isset($finalPermissions['residentsRecords_main_records_view']) ? 'PRESENT' : 'NOT_PRESENT',
+            ]);
+            
+            // Also update the model instance to keep it in sync
+            $staff->module_permissions = $finalPermissions;
             
             // Verify what was actually saved by querying database directly
             $staff->refresh();
@@ -511,6 +516,20 @@ class StaffController extends Controller
 
             DB::commit();
 
+            // Double-check by querying database directly after commit
+            $staff->refresh();
+            $directDbCheck = \DB::table('staff')->where('id', $staff->id)->value('module_permissions');
+            $decodedDbCheck = json_decode($directDbCheck, true);
+            
+            Log::info('Final verification after commit', [
+                'staff_id' => $staff->id,
+                'model_module_permissions' => $staff->module_permissions,
+                'raw_db_value' => $directDbCheck,
+                'decoded_db_value' => $decodedDbCheck,
+                'residentsRecords_main_records_view_in_model' => $staff->module_permissions['residentsRecords_main_records_view'] ?? 'NOT_SET',
+                'residentsRecords_main_records_view_in_db' => $decodedDbCheck['residentsRecords_main_records_view'] ?? 'NOT_SET',
+            ]);
+
             // Return success response with saved permissions for verification
             return response()->json([
                 'message' => 'Permissions updated successfully',
@@ -518,7 +537,13 @@ class StaffController extends Controller
                 'saved_permissions' => $staff->module_permissions,
                 'residents_related_keys' => array_filter(array_keys($staff->module_permissions ?? []), function($key) {
                     return strpos($key, 'residents') !== false;
-                })
+                }),
+                'residentsRecords_main_records_view' => $staff->module_permissions['residentsRecords_main_records_view'] ?? 'NOT_SET',
+                'debug_db_check' => [
+                    'raw' => $directDbCheck,
+                    'decoded' => $decodedDbCheck,
+                    'residentsRecords_main_records_view' => $decodedDbCheck['residentsRecords_main_records_view'] ?? 'NOT_SET',
+                ]
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
