@@ -650,13 +650,6 @@ const StaffManagement = () => {
       
       console.log('6. Backend response:', response.data);
 
-      // Update the staff list with the new permissions (normalized booleans)
-      setStaff(prevStaff => prevStaff.map(s => (
-        s.id === editingStaff.id
-          ? { ...s, module_permissions: mapApiToUiPermissions(formattedPermissions) }
-          : s
-      )));
-
       // Store staff name before clearing editingStaff
       const staffName = editingStaff?.name || 'the staff member';
 
@@ -668,8 +661,15 @@ const StaffManagement = () => {
       setSuccessStaffName(staffName);
       setShowSuccessModal(true);
       
-      // Refresh from server to ensure persistence
+      // Refresh from server to ensure persistence and verify what was saved
       await fetchStaff();
+      
+      // Verify the saved permissions
+      const updatedStaff = staff.find(s => s.id === editingStaff.id);
+      if (updatedStaff) {
+        console.log('7. Permissions after refresh:', JSON.stringify(updatedStaff.module_permissions, null, 2));
+        console.log('8. Residents permissions after refresh:', JSON.stringify(updatedStaff.module_permissions?.residents, null, 2));
+      }
     } catch (error) {
       console.error('Error updating permissions:', error);
       console.error('Error response:', error.response?.data);

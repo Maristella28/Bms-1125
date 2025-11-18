@@ -380,9 +380,20 @@ class StaffController extends Controller
                 'activityLogs' => false
             ];
             
-            // Merge incoming permissions with defaults
-            // This ensures main module keys exist, but preserves all nested keys from incomingPermissions
+            // IMPORTANT: array_merge will overwrite defaults with incoming, but we need ALL keys from incoming
+            // Use array_merge to combine, which will preserve all keys from $incomingPermissions
+            // including nested ones like residentsRecords_main_records_view
             $finalPermissions = array_merge($defaultPermissions, $incomingPermissions);
+            
+            // Debug: Check if nested permissions are present
+            $nestedKeys = array_filter(array_keys($finalPermissions), function($key) {
+                return strpos($key, '_') !== false && strpos($key, '_', strpos($key, '_') + 1) !== false;
+            });
+            
+            Log::info('Nested permission keys found', [
+                'nested_keys' => $nestedKeys,
+                'count' => count($nestedKeys)
+            ]);
             
             // Log what we're about to save
             Log::info('StaffController@updateModulePermissions - Final permissions to save', [
@@ -408,17 +419,38 @@ class StaffController extends Controller
             Log::info('Saving staff permissions', [
                 'staff_id' => $staff->id,
                 'original_permissions' => $request->module_permissions,
-                'final_permissions' => $finalPermissions
+                'final_permissions' => $finalPermissions,
+                'residents_related_keys' => array_filter(array_keys($finalPermissions), function($key) {
+                    return strpos($key, 'residents') !== false;
+                }),
+                'residentsRecords_main_records_view' => $finalPermissions['residentsRecords_main_records_view'] ?? 'NOT_SET',
+                'residentsRecords_main_records_edit' => $finalPermissions['residentsRecords_main_records_edit'] ?? 'NOT_SET',
+                'residentsRecords_main_records_disable' => $finalPermissions['residentsRecords_main_records_disable'] ?? 'NOT_SET',
             ]);
             
             $staff->save();
+            
+            // Verify what was actually saved
+            $staff->refresh();
+            Log::info('Staff permissions after save', [
+                'staff_id' => $staff->id,
+                'saved_permissions' => $staff->module_permissions,
+                'residents_related_keys' => array_filter(array_keys($staff->module_permissions ?? []), function($key) {
+                    return strpos($key, 'residents') !== false;
+                }),
+                'residentsRecords_main_records_view' => $staff->module_permissions['residentsRecords_main_records_view'] ?? 'NOT_SET',
+            ]);
 
             DB::commit();
 
-            // Return success response
+            // Return success response with saved permissions for verification
             return response()->json([
                 'message' => 'Permissions updated successfully',
-                'staff' => $staff
+                'staff' => $staff,
+                'saved_permissions' => $staff->module_permissions,
+                'residents_related_keys' => array_filter(array_keys($staff->module_permissions ?? []), function($key) {
+                    return strpos($key, 'residents') !== false;
+                })
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
