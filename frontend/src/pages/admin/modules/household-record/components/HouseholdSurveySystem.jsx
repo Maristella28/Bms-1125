@@ -193,7 +193,14 @@ const HouseholdSurveySystem = ({ household, onClose, onSurveySent }) => {
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
           
-          setSuccess('Survey form generated and downloaded successfully!');
+          // Show success message
+          setSuccess('✅ Survey form generated and downloaded successfully!');
+          setError(null);
+          
+          // Auto-dismiss success message after 5 seconds
+          setTimeout(() => {
+            setSuccess(null);
+          }, 5000);
         } catch (pdfErr) {
           console.error('Failed to download PDF:', pdfErr);
           

@@ -475,11 +475,20 @@ class HouseholdSurveyController extends Controller
             }
 
             // Check if template exists
-            if (!view()->exists('surveys.household-survey-form')) {
-                Log::error('Survey PDF template not found', ['template' => 'surveys.household-survey-form']);
+            $templatePath = 'surveys.household-survey-form';
+            $viewPath = resource_path('views/surveys/household-survey-form.blade.php');
+            
+            if (!view()->exists($templatePath)) {
+                Log::error('Survey PDF template not found', [
+                    'template' => $templatePath,
+                    'view_path' => $viewPath,
+                    'file_exists' => file_exists($viewPath),
+                    'views_directory' => resource_path('views'),
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'PDF template not found. Please contact support.',
+                    'error_details' => config('app.debug') ? "Template path: {$templatePath}, File path: {$viewPath}" : null,
                 ], 500);
             }
 
@@ -508,10 +517,30 @@ class HouseholdSurveyController extends Controller
                 'household_id' => $household->id,
                 'survey_type' => $survey->survey_type,
                 'questions_count' => count($data['questions']),
+                'template_path' => $templatePath,
+                'view_exists' => view()->exists($templatePath),
             ]);
 
+            // Try to render the view first to catch any errors
+            try {
+                $html = view($templatePath, $data)->render();
+                if (empty($html)) {
+                    throw new \Exception('View rendered empty content');
+                }
+            } catch (\Exception $viewErr) {
+                Log::error('Failed to render survey view', [
+                    'survey_id' => $id,
+                    'error' => $viewErr->getMessage(),
+                    'trace' => $viewErr->getTraceAsString(),
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to render PDF template: ' . $viewErr->getMessage(),
+                ], 500);
+            }
+
             // Generate PDF using DomPDF
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('surveys.household-survey-form', $data);
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($templatePath, $data);
             $pdf->setPaper('A4', 'portrait');
 
             // Generate PDF content
