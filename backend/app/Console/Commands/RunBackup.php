@@ -255,24 +255,39 @@ class RunBackup extends Command
             $existingFiles = array_filter($configFiles, 'file_exists');
             $this->line("   Files to backup: " . count($existingFiles));
 
-            // Create tar.gz archive
-            $fileList = implode(' ', array_map('escapeshellarg', $existingFiles));
-            $command = sprintf(
-                'tar -czf %s -C %s %s 2>/dev/null',
-                escapeshellarg($backupFile),
-                escapeshellarg(base_path()),
-                $fileList
-            );
-
-            exec($command, $output, $returnCode);
-
-            if ($returnCode === 0 && file_exists($backupFile)) {
-                $size = $this->formatBytes(filesize($backupFile));
-                $this->line("   <fg=green>✓</> Configuration backup created: {$size}");
-                return ['success' => true, 'message' => "Backup created ({$size})"];
+            // Use PHP-based backup for Windows compatibility
+            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' || !function_exists('exec')) {
+                // Windows or exec disabled: Use PHP ZipArchive
+                $this->line("   Using PHP ZipArchive for backup...");
+                $backupFileZip = str_replace('.tar.gz', '.zip', $backupFile);
+                $result = $this->backupConfigPHP($existingFiles, $backupFileZip);
+                
+                if ($result['success'] && file_exists($backupFileZip)) {
+                    $size = $this->formatBytes(filesize($backupFileZip));
+                    $this->line("   <fg=green>✓</> Configuration backup created: {$size}");
+                    return ['success' => true, 'message' => "Backup created ({$size})"];
+                }
+                return ['success' => false, 'message' => $result['message'] ?? 'Backup failed'];
             } else {
-                $this->error("   ✗ Configuration backup failed!");
-                return ['success' => false, 'message' => 'Backup failed'];
+                // Linux/Unix: Use tar
+                $fileList = implode(' ', array_map('escapeshellarg', $existingFiles));
+                $command = sprintf(
+                    'tar -czf %s -C %s %s 2>/dev/null',
+                    escapeshellarg($backupFile),
+                    escapeshellarg(base_path()),
+                    $fileList
+                );
+
+                exec($command, $output, $returnCode);
+
+                if ($returnCode === 0 && file_exists($backupFile)) {
+                    $size = $this->formatBytes(filesize($backupFile));
+                    $this->line("   <fg=green>✓</> Configuration backup created: {$size}");
+                    return ['success' => true, 'message' => "Backup created ({$size})"];
+                } else {
+                    $this->error("   ✗ Configuration backup failed!");
+                    return ['success' => false, 'message' => 'Backup failed'];
+                }
             }
         } catch (\Exception $e) {
             $this->error("   ✗ Error: " . $e->getMessage());
@@ -426,6 +441,36 @@ class RunBackup extends Command
         } catch (\Exception $e) {
             $this->error("   Compression error: " . $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Backup configuration files using PHP ZipArchive (Windows compatible)
+     */
+    private function backupConfigPHP($configFiles, $backupFile)
+    {
+        try {
+            if (!class_exists('ZipArchive')) {
+                return ['success' => false, 'message' => 'ZipArchive class not available'];
+            }
+
+            $zip = new \ZipArchive();
+            if ($zip->open($backupFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== TRUE) {
+                return ['success' => false, 'message' => 'Cannot create zip file'];
+            }
+
+            $basePath = base_path();
+            foreach ($configFiles as $file) {
+                if (file_exists($file)) {
+                    $relativePath = str_replace($basePath . DIRECTORY_SEPARATOR, '', $file);
+                    $zip->addFile($file, $relativePath);
+                }
+            }
+
+            $zip->close();
+            return ['success' => true, 'message' => 'Configuration files backed up'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
