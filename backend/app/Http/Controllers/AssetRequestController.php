@@ -12,9 +12,11 @@ use Illuminate\Support\Facades\Auth;
 use App\Notifications\AssetRequestNotification;
 use App\Notifications\AssetPaymentNotification;
 use App\Models\User;
+use App\Traits\ChecksStaffPermissions;
 
 class AssetRequestController extends Controller
 {
+    use ChecksStaffPermissions;
     /**
      * Generate custom request ID format: RAST12323250610138
      * R-Request, AST-AsSeT, 123-random 3digit, 23-minutes, 25-year, 06-day, 10-month, 138-last 3 digit of resident id
@@ -39,14 +41,26 @@ class AssetRequestController extends Controller
         return "RAST{$randomNum}{$minutes}{$year}{$day}{$month}{$residentIdSuffix}";
     }
 
-    // List requests (admin: all, user: own)
+    // List requests (admin: all, staff with inventory permissions: all, others: own)
     public function index(Request $request)
     {
         $user = Auth::user();
         $perPage = $request->get('per_page', 10);
         $page = $request->get('page', 1);
         
+        // Check if user is admin or staff with inventory permissions
+        $hasFullAccess = false;
         if ($user->role === 'admin') {
+            $hasFullAccess = true;
+        } elseif ($user->role === 'staff') {
+            // Check if staff has inventory module permissions
+            $staff = \App\Models\Staff::where('user_id', $user->id)->first();
+            if ($staff && isset($staff->module_permissions['inventoryAssets']) && $staff->module_permissions['inventoryAssets']) {
+                $hasFullAccess = true;
+            }
+        }
+        
+        if ($hasFullAccess) {
             $query = AssetRequest::with(['items.asset', 'user', 'resident']);
         } else {
             $query = AssetRequest::with(['items.asset', 'resident'])->where('user_id', $user->id);
@@ -557,7 +571,19 @@ class AssetRequestController extends Controller
         $user = Auth::user();
         \Log::info('getStatusCounts called', ['user' => $user]);
 
+        // Check if user is admin or staff with inventory permissions
+        $hasFullAccess = false;
         if ($user->role === 'admin') {
+            $hasFullAccess = true;
+        } elseif ($user->role === 'staff') {
+            // Check if staff has inventory module permissions
+            $staff = \App\Models\Staff::where('user_id', $user->id)->first();
+            if ($staff && isset($staff->module_permissions['inventoryAssets']) && $staff->module_permissions['inventoryAssets']) {
+                $hasFullAccess = true;
+            }
+        }
+
+        if ($hasFullAccess) {
             $query = AssetRequest::query();
         } else {
             $query = AssetRequest::where('user_id', $user->id);

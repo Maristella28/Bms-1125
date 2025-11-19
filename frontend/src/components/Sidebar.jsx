@@ -502,8 +502,9 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
         
         // Fetch pending blotter requests count
         // Only fetch if user has blotter module access
-        // NOTE: /admin/blotter-requests is admin-only, so skip for staff users
-        (user?.role === 'admin' && hasModuleAccess('blotter'))
+        // For staff, try to access /admin/blotter-requests (may fail if route is admin-only)
+        // For admin, use /admin/blotter-requests
+        (user?.role === 'admin' || (user?.role === 'staff' && hasModuleAccess('blotter')))
         ? axiosInstance.get('/admin/blotter-requests', {
           timeout: 15000 // 15 second timeout - increased for slow backend
         }).then(response => {
@@ -511,8 +512,8 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
           const pendingBlotter = countPendingItems(blotterRequests);
           return { type: 'blotter', count: pendingBlotter };
         }).catch(err => {
-          // Silently fail timeout errors - don't spam console
-          if (err.code !== 'ECONNABORTED') {
+          // Silently fail timeout errors and 403 errors for staff (route may be admin-only)
+          if (err.code !== 'ECONNABORTED' && err.response?.status !== 403) {
             console.error('Error fetching blotter requests count:', err);
           }
           return null;
@@ -520,34 +521,55 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
         
         // Fetch pending asset requests count (use efficient endpoint)
         // Only fetch if user has inventory module access
+        // For staff with inventory permissions, use /asset-requests to get all requests
+        // For admin, try status-counts first, then fallback to full list
         (user?.role === 'admin' || hasModuleAccess('inventory'))
-        ? axiosInstance.get('/asset-requests/status-counts', {
-          timeout: 15000 // 15 second timeout - increased for slow backend
-        }).then(response => {
-          const statusCounts = response.data || {};
-          const pendingAssets = typeof statusCounts.pending === 'number' ? statusCounts.pending : 0;
-          return { type: 'inventory', count: pendingAssets };
-        }).catch(err => {
-          // Silently fail timeout errors - don't spam console
-          if (err.code !== 'ECONNABORTED') {
-            console.error('Error fetching asset status counts:', err);
-          }
-          // Fallback: try full list
-          return axiosInstance.get('/asset-requests', {
-            timeout: 15000, // Increased timeout for fallback
-            params: { per_page: 1000, page: 1 }
-          }).then(response => {
-            const assetRequests = extractArrayFromResponse(response.data, ['asset_requests']);
-            const pendingAssets = countPendingItems(assetRequests);
-            return { type: 'inventory', count: pendingAssets };
-          }).catch(altErr => {
-            // Silently fail timeout errors
-            if (altErr.code !== 'ECONNABORTED') {
-              console.error('Error fetching asset requests count:', altErr);
+        ? (() => {
+            // For staff, directly use /asset-requests to get all requests (status-counts only returns own requests)
+            if (user?.role === 'staff') {
+              return axiosInstance.get('/asset-requests', {
+                timeout: 15000,
+                params: { per_page: 1000, page: 1 }
+              }).then(response => {
+                const assetRequests = extractArrayFromResponse(response.data, ['asset_requests']);
+                const pendingAssets = countPendingItems(assetRequests);
+                return { type: 'inventory', count: pendingAssets };
+              }).catch(err => {
+                if (err.code !== 'ECONNABORTED') {
+                  console.error('Error fetching asset requests count:', err);
+                }
+                return null;
+              });
             }
-            return null;
-          });
-        }).catch(() => null) : Promise.resolve(null)
+            // For admin, try status-counts first (more efficient)
+            return axiosInstance.get('/asset-requests/status-counts', {
+              timeout: 15000 // 15 second timeout - increased for slow backend
+            }).then(response => {
+              const statusCounts = response.data || {};
+              const pendingAssets = typeof statusCounts.pending === 'number' ? statusCounts.pending : 0;
+              return { type: 'inventory', count: pendingAssets };
+            }).catch(err => {
+              // Silently fail timeout errors - don't spam console
+              if (err.code !== 'ECONNABORTED') {
+                console.error('Error fetching asset status counts:', err);
+              }
+              // Fallback: try full list
+              return axiosInstance.get('/asset-requests', {
+                timeout: 15000, // Increased timeout for fallback
+                params: { per_page: 1000, page: 1 }
+              }).then(response => {
+                const assetRequests = extractArrayFromResponse(response.data, ['asset_requests']);
+                const pendingAssets = countPendingItems(assetRequests);
+                return { type: 'inventory', count: pendingAssets };
+              }).catch(altErr => {
+                // Silently fail timeout errors
+                if (altErr.code !== 'ECONNABORTED') {
+                  console.error('Error fetching asset requests count:', altErr);
+                }
+                return null;
+              });
+            });
+          })() : Promise.resolve(null)
       ];
       
       // Execute all fetches in parallel (use allSettled so one failure doesn't block others)
