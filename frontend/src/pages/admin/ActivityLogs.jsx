@@ -202,13 +202,12 @@ const ActivityLogs = () => {
     fetchSecurityAlerts();
     fetchAuditSummary();
     fetchFlaggedResidentsCount();
+    fetchInactiveResidents(); // Always fetch inactive residents
   }, [filters.page, filters.per_page, filters.user_type, filters.action, filters.model_type, filters.search, filters.date_from, filters.date_to]);
 
   useEffect(() => {
-    if (showInactiveResidents) {
-      fetchInactiveResidents();
-    }
-  }, [showInactiveResidents, inactiveResidentsPage]);
+    fetchInactiveResidents();
+  }, [inactiveResidentsPage]);
 
   const fetchLogs = async () => {
     try {
@@ -988,6 +987,135 @@ const ActivityLogs = () => {
                 </div>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* For Review - Inactive Residents Table */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mb-8 transition-all duration-300 hover:shadow-2xl w-full">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <ExclamationTriangleIcon className="w-6 h-6 text-orange-600" />
+                For Review
+                {flaggedResidentsCount > 0 && (
+                  <span className="px-3 py-1 bg-red-600 text-white text-sm rounded-full font-bold">
+                    {flaggedResidentsCount}
+                  </span>
+                )}
+              </h3>
+              <p className="text-gray-600 text-sm">Users with no login activity for 1 year</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleFlagInactiveResidents}
+                className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-semibold transition-all duration-300 transform hover:scale-105"
+              >
+                <ExclamationTriangleIcon className="w-5 h-5" />
+                Flag All for Review
+              </button>
+              <button
+                onClick={fetchInactiveResidents}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md transition-all duration-300 transform hover:scale-105"
+              >
+                <ArrowPathIcon className="w-4 h-4 mr-2" />
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          {inactiveResidentsLoading ? (
+            <div className="text-center py-12">
+              <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading inactive residents...</p>
+            </div>
+          ) : inactiveResidents.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircleIcon className="w-8 h-8 text-green-600" />
+              </div>
+              <p className="text-gray-600 font-semibold text-lg">No inactive residents found</p>
+              <p className="text-gray-400 text-sm">All residents have been active in the past year</p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b-2 border-orange-200">
+                    <tr>
+                      <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider">Resident ID</th>
+                      <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider">Contact Number</th>
+                      <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider">Last Activity</th>
+                      <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider">Days Inactive</th>
+                      <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {inactiveResidents.map((resident) => (
+                      <tr key={resident.id} className="hover:bg-orange-50 transition-colors">
+                        <td className="px-6 py-4 font-mono text-sm text-gray-700">{resident.resident_id}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900">{resident.full_name}</td>
+                        <td className="px-6 py-4 text-gray-700">{resident.email || 'N/A'}</td>
+                        <td className="px-6 py-4 text-gray-700">{resident.contact_number || 'N/A'}</td>
+                        <td className="px-6 py-4 text-gray-700">
+                          {format(new Date(resident.last_activity_date), 'MMM dd, yyyy')}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            resident.days_inactive >= 365
+                              ? 'bg-red-100 text-red-800 border border-red-300'
+                              : resident.days_inactive >= 180
+                              ? 'bg-orange-100 text-orange-800 border border-orange-300'
+                              : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                          }`}>
+                            {resident.days_inactive} days
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {resident.for_review ? (
+                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-300">
+                              For Review
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-300">
+                              Not Flagged
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {inactiveResidentsTotal > 20 && (
+                <div className="flex justify-center items-center gap-4 mt-6 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => setInactiveResidentsPage(prev => Math.max(1, prev - 1))}
+                    disabled={inactiveResidentsPage === 1}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Previous
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    Page {inactiveResidentsPage} of {Math.ceil(inactiveResidentsTotal / 20)}
+                  </span>
+                  <button
+                    onClick={() => setInactiveResidentsPage(prev => prev + 1)}
+                    disabled={inactiveResidentsPage >= Math.ceil(inactiveResidentsTotal / 20)}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 flex items-center gap-2"
+                  >
+                    Next
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
 
