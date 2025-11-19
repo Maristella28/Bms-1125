@@ -827,9 +827,13 @@ const ActionsDropdown = ({ resident, onEdit, onDisable, onView }) => {
       label: 'View',
       icon: EyeIcon,
       onClick: () => {
+        console.log('View action clicked for resident:', resident);
         const residentId = resident?.id || resident?.user_id;
         if (residentId && onView) {
+          console.log('Calling onView with residentId:', residentId);
           onView(residentId);
+        } else {
+          console.error('View action: Missing residentId or onView handler', { residentId, hasOnView: !!onView });
         }
       },
       className: 'text-gray-700 hover:bg-blue-50 hover:text-blue-700',
@@ -841,7 +845,14 @@ const ActionsDropdown = ({ resident, onEdit, onDisable, onView }) => {
     menuItems.push({
       label: 'Edit',
       icon: PencilIcon,
-      onClick: () => onEdit?.(resident),
+      onClick: () => {
+        console.log('Edit action clicked for resident:', resident);
+        if (onEdit) {
+          onEdit(resident);
+        } else {
+          console.error('Edit action: onEdit handler is missing');
+        }
+      },
       className: 'text-gray-700 hover:bg-yellow-50 hover:text-yellow-700',
     });
   }
@@ -852,14 +863,19 @@ const ActionsDropdown = ({ resident, onEdit, onDisable, onView }) => {
       label: 'Disable',
       icon: TrashIcon,
       onClick: () => {
-        console.log('Disable clicked, resident object:', resident);
+        console.log('Disable action clicked for resident:', resident);
         console.log('Resident ID:', resident?.id, 'Type:', typeof resident?.id);
         const residentId = resident?.id || resident?.user_id;
         if (!residentId) {
-          console.error('No resident ID found in resident object:', resident);
+          console.error('Disable action: No resident ID found in resident object:', resident);
           return;
         }
-        onDisable?.(residentId);
+        if (onDisable) {
+          console.log('Calling onDisable with residentId:', residentId);
+          onDisable(residentId);
+        } else {
+          console.error('Disable action: onDisable handler is missing');
+        }
       },
       className: 'text-gray-700 hover:bg-red-50 hover:text-red-700',
     });
@@ -1600,14 +1616,19 @@ const ResidentsRecords = () => {
     console.log('handleShowDetails called with ID:', residentId);
     
     // Check if user has view permission (for staff users)
+    // Admin users always have access
     if (user?.role === 'staff') {
-      const canView = canPerformAction('view', 'residents', 'main_records');
-      console.log('View permission check:', {
-        canView,
+      // Check permission - but also check direct permission value as fallback
+      const hasViewPermission = canPerformAction('view', 'residents', 'main_records') || 
+                                user?.module_permissions?.residentsRecords_main_records_view === true;
+      console.log('View permission check in handleShowDetails:', {
+        canView: hasViewPermission,
+        canPerformActionResult: canPerformAction('view', 'residents', 'main_records'),
+        directPermissionValue: user?.module_permissions?.residentsRecords_main_records_view,
         permissions: user?.module_permissions,
-        residentsRecords_main_records_view: user?.module_permissions?.residentsRecords_main_records_view
+        allResidentsKeys: Object.keys(user?.module_permissions || {}).filter(k => k.includes('residents'))
       });
-      if (!canView) {
+      if (!hasViewPermission) {
         toast.error('You do not have permission to view resident details');
         return;
       }
@@ -1640,6 +1661,24 @@ const ResidentsRecords = () => {
   };
 
   const handleUpdate = (resident) => {
+    // Check if user has edit permission (for staff users)
+    // Admin users always have access
+    if (user?.role === 'staff') {
+      // Check permission - but also check direct permission value as fallback
+      const hasEditPermission = canPerformAction('edit', 'residents', 'main_records') || 
+                               user?.module_permissions?.residentsRecords_main_records_edit === true;
+      console.log('Edit permission check in handleUpdate:', {
+        canEdit: hasEditPermission,
+        canPerformActionResult: canPerformAction('edit', 'residents', 'main_records'),
+        directPermissionValue: user?.module_permissions?.residentsRecords_main_records_edit,
+        permissions: user?.module_permissions
+      });
+      if (!hasEditPermission) {
+        toast.error('You do not have permission to edit resident details');
+        return;
+      }
+    }
+    
     // Check if residency verification is denied
     if (resident.verification_status === 'denied') {
       showInfo("This resident's residency verification has been denied. Profile cannot be edited.", 'Verification', 'info');
@@ -1962,6 +2001,22 @@ const ResidentsRecords = () => {
   // Triggers the confirm modal
   const handleDelete = (residentId) => {
     console.log('handleDelete called with residentId:', residentId, 'Type:', typeof residentId);
+    
+    // Check if user has disable permission (for staff users)
+    // Admin users always have access
+    if (user?.role === 'staff') {
+      const hasDisablePermission = canPerformAction('disable', 'residents', 'main_records');
+      console.log('Disable permission check in handleDelete:', {
+        canDisable: hasDisablePermission,
+        permissions: user?.module_permissions,
+        residentsRecords_main_records_disable: user?.module_permissions?.residentsRecords_main_records_disable
+      });
+      if (!hasDisablePermission) {
+        toast.error('You do not have permission to disable residents');
+        return;
+      }
+    }
+    
     if (!residentId) {
       console.error('No resident ID provided to handleDelete');
       showInfo('Error: No resident ID provided', 'Error', 'error');
