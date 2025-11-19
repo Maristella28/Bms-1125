@@ -340,7 +340,15 @@ class ProgramApplicationFormController extends Controller
             ], 404);
         }
 
-        $validator = Validator::make($request->all(), [
+        // Prepare validation data - ensure published_at is set if deadline is set
+        $validationData = $request->all();
+        if (isset($validationData['deadline']) && !empty($validationData['deadline']) && 
+            (!isset($validationData['published_at']) || empty($validationData['published_at']))) {
+            // If deadline is set but published_at is not, set published_at to now for validation
+            $validationData['published_at'] = now()->toISOString();
+        }
+
+        $validator = Validator::make($validationData, [
             'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'sometimes|in:draft,published,closed',
@@ -356,7 +364,8 @@ class ProgramApplicationFormController extends Controller
             'fields.*.is_required' => 'boolean',
             'fields.*.field_options' => 'nullable|array',
             'fields.*.validation_rules' => 'nullable|array',
-            'fields.*.sort_order' => 'integer|min:0'
+            'fields.*.sort_order' => 'integer|min:0',
+            'fields.*.is_active' => 'boolean'
         ]);
 
         if ($validator->fails()) {
@@ -369,11 +378,19 @@ class ProgramApplicationFormController extends Controller
 
         DB::beginTransaction();
         try {
+            // Prepare form data, handling null values properly
+            $formData = [
+                'title' => $request->has('title') ? $request->title : $form->title,
+                'description' => $request->has('description') ? ($request->description ?: null) : $form->description,
+                'status' => $request->has('status') ? $request->status : $form->status,
+                'published_at' => $request->has('published_at') ? ($request->published_at ?: null) : $form->published_at,
+                'deadline' => $request->has('deadline') ? ($request->deadline ?: null) : $form->deadline,
+                'allow_multiple_submissions' => $request->has('allow_multiple_submissions') ? $request->boolean('allow_multiple_submissions') : $form->allow_multiple_submissions,
+                'form_settings' => $request->has('form_settings') ? ($request->form_settings ?: null) : $form->form_settings
+            ];
+
             // Update the form
-            $form->update($request->only([
-                'title', 'description', 'status', 'published_at',
-                'deadline', 'allow_multiple_submissions', 'form_settings'
-            ]));
+            $form->update($formData);
 
             // Update form fields if provided
             if ($request->has('fields')) {
@@ -382,17 +399,42 @@ class ProgramApplicationFormController extends Controller
 
                 // Create new fields
                 foreach ($request->fields as $fieldData) {
-                    ApplicationFormField::create([
-                        'form_id' => $form->id,
-                        'field_name' => $fieldData['field_name'],
-                        'field_label' => $fieldData['field_label'],
-                        'field_type' => $fieldData['field_type'],
-                        'field_description' => $fieldData['field_description'] ?? null,
-                        'is_required' => $fieldData['is_required'] ?? false,
-                        'field_options' => $fieldData['field_options'] ?? null,
-                        'validation_rules' => $fieldData['validation_rules'] ?? null,
-                        'sort_order' => $fieldData['sort_order'] ?? 0
-                    ]);
+                    // Handle field_options - convert empty array to null, ensure it's an array or null
+                    $fieldOptions = null;
+                    if (isset($fieldData['field_options']) && !empty($fieldData['field_options'])) {
+                        if (is_array($fieldData['field_options']) && count($fieldData['field_options']) > 0) {
+                            $fieldOptions = $fieldData['field_options'];
+                        }
+                    }
+                    
+                    // Handle validation_rules - convert empty object/array to null
+                    $validationRules = null;
+                    if (isset($fieldData['validation_rules']) && !empty($fieldData['validation_rules'])) {
+                        if (is_array($fieldData['validation_rules']) && count($fieldData['validation_rules']) > 0) {
+                            $validationRules = $fieldData['validation_rules'];
+                        }
+                    }
+                    
+                    try {
+                        ApplicationFormField::create([
+                            'form_id' => $form->id,
+                            'field_name' => $fieldData['field_name'],
+                            'field_label' => $fieldData['field_label'],
+                            'field_type' => $fieldData['field_type'],
+                            'field_description' => !empty($fieldData['field_description']) ? $fieldData['field_description'] : null,
+                            'is_required' => isset($fieldData['is_required']) ? (bool)$fieldData['is_required'] : false,
+                            'field_options' => $fieldOptions,
+                            'validation_rules' => $validationRules,
+                            'sort_order' => isset($fieldData['sort_order']) ? (int)$fieldData['sort_order'] : 0,
+                            'is_active' => isset($fieldData['is_active']) ? (bool)$fieldData['is_active'] : true
+                        ]);
+                    } catch (\Exception $fieldException) {
+                        \Log::error('Error updating field: ' . $fieldException->getMessage(), [
+                            'field_data' => $fieldData,
+                            'trace' => $fieldException->getTraceAsString()
+                        ]);
+                        throw $fieldException;
+                    }
                 }
             }
 
@@ -406,10 +448,20 @@ class ProgramApplicationFormController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            // Log the full error for debugging
+            \Log::error('Error updating application form: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+                'form_id' => $id
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update application form',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ], 500);
         }
     }
