@@ -825,7 +825,23 @@ const StaffManagement = () => {
       const formattedPermissions = mapUiToApiPermissions(currentPermissions);
 
       console.log('4. Formatted permissions to send:', JSON.stringify(formattedPermissions, null, 2));
-      console.log('5. Residents-related keys:', Object.keys(formattedPermissions).filter(k => k.includes('residents')));
+      const residentsKeys = Object.keys(formattedPermissions).filter(k => k.includes('residents'));
+      console.log('5. Residents-related keys being sent:', residentsKeys);
+      
+      // CRITICAL: Verify nested permissions are being sent
+      const requiredNestedKeys = [
+        'residentsRecords_main_records_edit',
+        'residentsRecords_main_records_disable',
+        'residentsRecords_main_records_view'
+      ];
+      const missingKeys = requiredNestedKeys.filter(key => !formattedPermissions.hasOwnProperty(key));
+      if (missingKeys.length > 0) {
+        console.warn('⚠️ WARNING: Missing nested permission keys in payload:', missingKeys);
+        console.warn('⚠️ These keys will NOT be saved to the database!');
+        console.warn('⚠️ Please ensure the nested permissions (Edit, Disable, View) are enabled in the UI before saving.');
+      } else {
+        console.log('✅ All required nested permission keys are present in payload');
+      }
 
       const response = await axiosInstance.put(`/api/admin/staff/${editingStaff.id}/permissions`, {
         module_permissions: formattedPermissions,
@@ -833,6 +849,21 @@ const StaffManagement = () => {
       });
       
       console.log('6. Backend response:', response.data);
+      
+      // Verify nested permissions in the response
+      const savedPerms = response.data?.staff?.module_permissions || response.data?.saved_permissions || {};
+      const savedResidentsKeys = Object.keys(savedPerms).filter(k => k.includes('residents'));
+      console.log('7. Residents-related keys in saved response:', savedResidentsKeys);
+      const savedNestedKeys = requiredNestedKeys.filter(key => savedPerms.hasOwnProperty(key) && savedPerms[key]);
+      if (savedNestedKeys.length === requiredNestedKeys.length) {
+        console.log('✅ All nested permissions were saved successfully!');
+      } else {
+        console.error('❌ Some nested permissions were NOT saved:', {
+          expected: requiredNestedKeys,
+          saved: savedNestedKeys,
+          missing: requiredNestedKeys.filter(k => !savedNestedKeys.includes(k))
+        });
+      }
 
       // Store staff name before clearing editingStaff
       const staffName = editingStaff?.name || 'the staff member';

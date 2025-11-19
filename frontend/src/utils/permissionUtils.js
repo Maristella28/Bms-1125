@@ -165,15 +165,22 @@ export const canPerformAction = (staffPermissions, action, moduleKey, subModuleK
     // Only log for debugging when checking residents permissions
     if (backendKey === 'residentsRecords') {
       const availableKeys = Object.keys(staffPermissions).filter(k => k.includes(backendKey));
+      const allKeys = Object.keys(staffPermissions);
+      
       console.log(`❌ canPerformAction: Flat key "${flatKey}" not found - action NOT permitted`, {
         lookingFor: flatKey,
         availableKeys: availableKeys,
-        allKeys: Object.keys(staffPermissions),
+        allKeys: allKeys,
+        allKeysWithValues: allKeys.map(k => ({ key: k, value: staffPermissions[k], type: typeof staffPermissions[k] })),
         staffPermissions: staffPermissions,
         // Try to find similar keys
         similarKeys: Object.keys(staffPermissions).filter(k => 
           k.includes(backendKey) && k.includes(subModuleKey) && k.includes(action)
-        )
+        ),
+        // Check if main_records exists
+        hasMainRecords: staffPermissions[`${backendKey}_${subModuleKey}`],
+        // Check all residents-related keys
+        allResidentsKeys: allKeys.filter(k => k.toLowerCase().includes('residents'))
       });
     }
     

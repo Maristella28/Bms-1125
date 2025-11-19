@@ -756,6 +756,9 @@ const ActionsDropdown = ({ resident, onEdit, onDisable, onView }) => {
     const allKeys = Object.keys(perms);
     const residentsKeys = allKeys.filter(k => k.includes('residents'));
     
+    // Show ALL keys with their values for debugging
+    const allKeysWithValues = allKeys.map(k => `${k}: ${perms[k]} (${typeof perms[k]})`);
+    
     console.log('🔍 ActionsDropdown permissions check:', {
       userRole: user?.role,
       isAdmin,
@@ -766,6 +769,7 @@ const ActionsDropdown = ({ resident, onEdit, onDisable, onView }) => {
       hasModulePermissions: !!user?.module_permissions,
       modulePermissionsCount: allKeys.length,
       allKeys: allKeys,
+      allKeysWithValues: allKeysWithValues, // Show all keys with values
       residentsKeys: residentsKeys,
       // Direct permission values (raw)
       rawEdit: perms.residentsRecords_main_records_edit,
@@ -781,8 +785,24 @@ const ActionsDropdown = ({ resident, onEdit, onDisable, onView }) => {
       testView: canPerformAction('view', 'residents', 'main_records'),
       // Check if main_records permission exists
       residentsRecords_main_records: perms.residentsRecords_main_records,
-      residentsRecords: perms.residentsRecords
+      residentsRecords: perms.residentsRecords,
+      // Show the full permissions object
+      fullPermissions: perms
     });
+    
+    // CRITICAL: If nested permissions are missing, show a clear warning
+    if (!perms.residentsRecords_main_records_edit && !perms.residentsRecords_main_records_disable && !perms.residentsRecords_main_records_view) {
+      console.error('❌ MISSING NESTED PERMISSIONS!', {
+        message: 'The nested permission keys (residentsRecords_main_records_edit, residentsRecords_main_records_disable, residentsRecords_main_records_view) are NOT in the database.',
+        action: 'Please go to Staff Management, edit this staff member\'s permissions, and enable the nested permissions under Residents -> Main Records -> Edit/Disable/View',
+        currentResidentsKeys: residentsKeys,
+        expectedKeys: [
+          'residentsRecords_main_records_edit',
+          'residentsRecords_main_records_disable',
+          'residentsRecords_main_records_view'
+        ]
+      });
+    }
   }
 
   // Calculate dropdown position when opened
