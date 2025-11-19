@@ -30,9 +30,16 @@ class ProgramApplicationFormController extends Controller
             $query->where('program_id', $request->program_id);
         }
 
-        // Filter by status if provided
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
+        // For residents (non-admin users), only show published forms
+        $user = auth()->user();
+        if ($user && $user->role !== 'admin' && $user->role !== 'staff') {
+            // Residents should only see published forms
+            $query->where('status', 'published');
+        } else {
+            // Admins and staff can see all forms, but can filter by status if provided
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            }
         }
 
         $forms = $query->orderBy('created_at', 'desc')->get();

@@ -50,9 +50,9 @@ const ProgramAnnouncements = () => {
         // console.log('ProgramAnnouncements: Announcements response:', announcementsRes.data);
         setAnnouncements(announcementsRes.data.success ? announcementsRes.data.data : []);
         
-        // Fetch application forms for this specific program
+        // Fetch application forms for this specific program (only published forms)
         // console.log('ProgramAnnouncements: Fetching forms for program:', programId);
-        const formsRes = await axios.get(`/program-application-forms?program_id=${programId}`);
+        const formsRes = await axios.get(`/program-application-forms?program_id=${programId}&status=published`);
         // console.log('ProgramAnnouncements: Forms response:', formsRes.data);
         setApplicationForms(formsRes.data.success ? formsRes.data.data : []);
       } else {
