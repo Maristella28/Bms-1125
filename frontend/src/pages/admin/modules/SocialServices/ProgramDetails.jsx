@@ -349,6 +349,17 @@ const ProgramDetails = () => {
     setCurrentPage(1);
   }, [beneficiaries.length]);
 
+  // Auto-dismiss toast after 3 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   if (!program) {
     return (
       <div className="p-8 text-center">
@@ -3607,9 +3618,22 @@ const ProgramDetails = () => {
 
         {/* Toast */}
         {toast && (
-          <div className={`fixed right-6 bottom-6 z-50 p-4 rounded-lg shadow-lg ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
-            <div className="font-semibold">{toast.type === 'success' ? 'Success' : 'Error'}</div>
-            <div className="text-sm">{toast.message}</div>
+          <div className={`fixed right-6 bottom-6 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="font-semibold">{toast.type === 'success' ? 'Success' : 'Error'}</div>
+                <div className="text-sm">{toast.message}</div>
+              </div>
+              <button
+                onClick={() => setToast(null)}
+                className="text-white hover:text-gray-200 transition-colors flex-shrink-0"
+                aria-label="Close"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
 
