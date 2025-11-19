@@ -3770,18 +3770,18 @@ const SocialServices = () => {
                         <label className="block text-sm font-medium text-blue-700 mb-1">
                           Amount (₱) <span className="text-red-500">*</span>
                         </label>
-                        <input
+                      <input
                           type="number"
                           min="0"
                           step="0.01"
                           value={programForm.amount}
                           onChange={e => setProgramForm(f => ({ ...f, amount: e.target.value }))}
-                          className="w-full border border-blue-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white shadow-sm placeholder-blue-300 text-blue-900 hover:shadow-md focus:shadow-lg"
+                        className="w-full border border-blue-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white shadow-sm placeholder-blue-300 text-blue-900 hover:shadow-md focus:shadow-lg"
                           placeholder="Enter amount"
-                          required
-                        />
-                      </div>
-                      <div>
+                        required
+                      />
+                    </div>
+                    <div>
                         <label className="block text-sm font-medium text-blue-700 mb-1">
                           Overall Budget (₱)
                         </label>
@@ -3818,17 +3818,17 @@ const SocialServices = () => {
                         <label className="block text-sm font-medium text-blue-700 mb-1">
                           Estimated Cost per Beneficiary (₱)
                         </label>
-                        <input
-                          type="number"
+                      <input
+                        type="number"
                           min="0"
                           step="0.01"
-                          value={programForm.amount}
-                          onChange={e => setProgramForm(f => ({ ...f, amount: e.target.value }))}
-                          className="w-full border border-blue-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white shadow-sm placeholder-blue-300 text-blue-900 hover:shadow-md focus:shadow-lg"
+                        value={programForm.amount}
+                        onChange={e => setProgramForm(f => ({ ...f, amount: e.target.value }))}
+                        className="w-full border border-blue-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white shadow-sm placeholder-blue-300 text-blue-900 hover:shadow-md focus:shadow-lg"
                           placeholder="Enter estimated cost per beneficiary"
-                        />
+                      />
                         <p className="text-xs text-gray-500 mt-1">Optional: Enter the estimated cost/value per beneficiary for budget tracking</p>
-                      </div>
+                    </div>
                       <div>
                         <label className="block text-sm font-medium text-blue-700 mb-1">
                           Overall Budget (₱)
@@ -3846,7 +3846,7 @@ const SocialServices = () => {
                                   : '₱0.00';
                               })()}
                             </span>
-                          </div>
+                  </div>
                           {(() => {
                             const amount = parseFloat(programForm.amount) || 0;
                             const maxBeneficiaries = parseFloat(programForm.maxBeneficiaries) || 0;

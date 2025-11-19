@@ -37,8 +37,8 @@ class ProgramApplicationFormController extends Controller
             $query->where('status', 'published');
         } else {
             // Admins and staff can see all forms, but can filter by status if provided
-            if ($request->has('status')) {
-                $query->where('status', $request->status);
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
             }
         }
 
@@ -128,11 +128,11 @@ class ProgramApplicationFormController extends Controller
                 }
                 
                 try {
-                    ApplicationFormField::create([
-                        'form_id' => $form->id,
-                        'field_name' => $fieldData['field_name'],
-                        'field_label' => $fieldData['field_label'],
-                        'field_type' => $fieldData['field_type'],
+                ApplicationFormField::create([
+                    'form_id' => $form->id,
+                    'field_name' => $fieldData['field_name'],
+                    'field_label' => $fieldData['field_label'],
+                    'field_type' => $fieldData['field_type'],
                         'field_description' => !empty($fieldData['field_description']) ? $fieldData['field_description'] : null,
                         'is_required' => isset($fieldData['is_required']) ? (bool)$fieldData['is_required'] : false,
                         'field_options' => $fieldOptions,
@@ -416,11 +416,11 @@ class ProgramApplicationFormController extends Controller
                     }
                     
                     try {
-                        ApplicationFormField::create([
-                            'form_id' => $form->id,
-                            'field_name' => $fieldData['field_name'],
-                            'field_label' => $fieldData['field_label'],
-                            'field_type' => $fieldData['field_type'],
+                    ApplicationFormField::create([
+                        'form_id' => $form->id,
+                        'field_name' => $fieldData['field_name'],
+                        'field_label' => $fieldData['field_label'],
+                        'field_type' => $fieldData['field_type'],
                             'field_description' => !empty($fieldData['field_description']) ? $fieldData['field_description'] : null,
                             'is_required' => isset($fieldData['is_required']) ? (bool)$fieldData['is_required'] : false,
                             'field_options' => $fieldOptions,

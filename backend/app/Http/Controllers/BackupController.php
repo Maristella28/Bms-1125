@@ -537,6 +537,28 @@ class BackupController extends Controller
                         }
                     }
                     
+                    // Preserve current activity_logs before restore
+                    $currentActivityLogs = [];
+                    $preserveLogs = true;
+                    try {
+                        if (DB::getSchemaBuilder()->hasTable('activity_logs')) {
+                            $currentActivityLogs = DB::table('activity_logs')
+                                ->orderBy('created_at', 'desc')
+                                ->get()
+                                ->map(function($log) {
+                                    // Convert to array and remove id (will be auto-generated on insert)
+                                    $logArray = (array) $log;
+                                    unset($logArray['id']);
+                                    return $logArray;
+                                })
+                                ->toArray();
+                            \Log::info('Preserved ' . count($currentActivityLogs) . ' activity log entries before restore');
+                        }
+                    } catch (\Exception $e) {
+                        \Log::warning('Could not preserve activity logs: ' . $e->getMessage());
+                        $preserveLogs = false;
+                    }
+                    
                     // Process SQL content to handle existing tables
                     // First, extract all table names from CREATE TABLE statements
                     $tableNames = [];
@@ -596,6 +618,33 @@ class BackupController extends Controller
                             }
                         }
                         $success = true;
+                        
+                        // Restore preserved activity logs after database restore
+                        if ($preserveLogs && !empty($currentActivityLogs) && DB::getSchemaBuilder()->hasTable('activity_logs')) {
+                            try {
+                                // Insert preserved logs, maintaining their relative order and timestamps
+                                $insertedCount = 0;
+                                foreach ($currentActivityLogs as $log) {
+                                    try {
+                                        // Ensure created_at is preserved
+                                        if (isset($log['created_at'])) {
+                                            DB::table('activity_logs')->insert($log);
+                                            $insertedCount++;
+                                        }
+                                    } catch (\Exception $e) {
+                                        \Log::warning('Failed to restore activity log entry: ' . $e->getMessage());
+                                    }
+                                }
+                                
+                                if ($insertedCount > 0) {
+                                    $output[] = "Preserved and restored $insertedCount activity log entries";
+                                    \Log::info("Restored $insertedCount preserved activity log entries after database restore");
+                                }
+                            } catch (\Exception $e) {
+                                \Log::error('Failed to restore preserved activity logs: ' . $e->getMessage());
+                                $output[] = "Warning: Could not restore all preserved activity logs";
+                            }
+                        }
                     } finally {
                         // Re-enable foreign key checks
                         DB::statement('SET FOREIGN_KEY_CHECKS=1;');

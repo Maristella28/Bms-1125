@@ -208,41 +208,41 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
           title: "Communication", 
           path: `/${userRole}/communicationAnnouncement`,
           module: "communication"
-        },
+    },
+    { 
+      title: "Disaster Response", 
+      path: `/${userRole}/disasterEmergency`,
+      module: "command_center"
+    },
+    { 
+      title: "Projects", 
+      path: `/${userRole}/projectManagement`,
+      module: "projects"
+    },
+    { 
+      title: "Inventory", 
+      path: `/${userRole}/inventoryAssets`,
+      module: "inventory",
+      subItems: [
         { 
-          title: "Disaster Response", 
-          path: `/${userRole}/disasterEmergency`,
-          module: "command_center"
-        },
-        { 
-          title: "Projects", 
-          path: `/${userRole}/projectManagement`,
-          module: "projects"
-        },
-        { 
-          title: "Inventory", 
-          path: `/${userRole}/inventoryAssets`,
+          title: "Asset Management", 
+          path: `/${userRole}/assets-management`,
           module: "inventory",
-          subItems: [
-            { 
-              title: "Asset Management", 
-              path: `/${userRole}/assets-management`,
-              module: "inventory",
-              subModule: "asset_management"
-            },
-            { 
-              title: "Asset Posts Management", 
-              path: `/${userRole}/assets-post-management`,
-              module: "inventory",
-              subModule: "asset_posts_management"
-            },
-            { 
-              title: "Asset Tracking", 
-              path: `/${userRole}/inventoryAssets?tab=tracking`,
-              module: "inventory",
-              subModule: "asset_tracking"
-            }
-          ]
+          subModule: "asset_management"
+        },
+        { 
+          title: "Asset Posts Management", 
+          path: `/${userRole}/assets-post-management`,
+          module: "inventory",
+          subModule: "asset_posts_management"
+        },
+        { 
+          title: "Asset Tracking", 
+          path: `/${userRole}/inventoryAssets?tab=tracking`,
+          module: "inventory",
+          subModule: "asset_tracking"
+        }
+      ]
         }
       ]
     }
@@ -400,37 +400,37 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
         ? (() => {
             const documentEndpoint = user?.role === 'admin' ? '/admin/document-requests' : '/staff/document-requests';
             return axiosInstance.get(documentEndpoint, {
-              timeout: 15000 // 15 second timeout - increased for slow backend
-            }).then(response => {
-              const requests = extractArrayFromResponse(response.data, ['document_requests']);
-              // Count ONLY pending requests - these are new requests needing approval
-              // This matches the requirement: "Only new requests needing approval in notification badges"
-              const pendingDocRequests = countPendingDocumentRequests(requests);
-              
-              // Debug log in development
-              if (process.env.NODE_ENV === 'development') {
-                const statusCounts = requests.reduce((acc, r) => {
-                  const status = (r.status?.toLowerCase() || 'unknown').trim();
-                  acc[status] = (acc[status] || 0) + 1;
-                  return acc;
-                }, {});
-                const nonPaidCount = countNonPaidDocumentRequests(requests);
-                console.log('📄 Document Requests Count:', {
-                  total: requests.length,
-                  pending: pendingDocRequests, // What badge shows (actionable items)
-                  nonPaid: nonPaidCount, // What tab shows (all in workflow)
-                  paid: requests.filter(r => (r.payment_status || r.paymentStatus) === 'paid').length,
-                  statusBreakdown: statusCounts
-                });
-              }
-              
-              return { type: 'documents', count: pendingDocRequests };
-            }).catch(err => {
-              // Silently fail - don't spam console with timeout errors
-              if (err.code !== 'ECONNABORTED') {
-                console.error('Error fetching document requests count:', err);
-              }
-              return null;
+          timeout: 15000 // 15 second timeout - increased for slow backend
+        }).then(response => {
+          const requests = extractArrayFromResponse(response.data, ['document_requests']);
+          // Count ONLY pending requests - these are new requests needing approval
+          // This matches the requirement: "Only new requests needing approval in notification badges"
+          const pendingDocRequests = countPendingDocumentRequests(requests);
+          
+          // Debug log in development
+          if (process.env.NODE_ENV === 'development') {
+            const statusCounts = requests.reduce((acc, r) => {
+              const status = (r.status?.toLowerCase() || 'unknown').trim();
+              acc[status] = (acc[status] || 0) + 1;
+              return acc;
+            }, {});
+            const nonPaidCount = countNonPaidDocumentRequests(requests);
+            console.log('📄 Document Requests Count:', {
+              total: requests.length,
+              pending: pendingDocRequests, // What badge shows (actionable items)
+              nonPaid: nonPaidCount, // What tab shows (all in workflow)
+              paid: requests.filter(r => (r.payment_status || r.paymentStatus) === 'paid').length,
+              statusBreakdown: statusCounts
+            });
+          }
+          
+          return { type: 'documents', count: pendingDocRequests };
+        }).catch(err => {
+          // Silently fail - don't spam console with timeout errors
+          if (err.code !== 'ECONNABORTED') {
+            console.error('Error fetching document requests count:', err);
+          }
+          return null;
             }).catch(() => null);
           })() : Promise.resolve(null),
         
@@ -494,17 +494,17 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
         ? (() => {
             const blotterEndpoint = user?.role === 'admin' ? '/admin/blotter-requests' : '/staff/blotter-requests';
             return axiosInstance.get(blotterEndpoint, {
-              timeout: 15000 // 15 second timeout - increased for slow backend
-            }).then(response => {
-              const blotterRequests = extractArrayFromResponse(response.data, ['blotter_requests']);
-              const pendingBlotter = countPendingItems(blotterRequests);
-              return { type: 'blotter', count: pendingBlotter };
-            }).catch(err => {
-              // Silently fail timeout errors - don't spam console
-              if (err.code !== 'ECONNABORTED') {
-                console.error('Error fetching blotter requests count:', err);
-              }
-              return null;
+          timeout: 15000 // 15 second timeout - increased for slow backend
+        }).then(response => {
+          const blotterRequests = extractArrayFromResponse(response.data, ['blotter_requests']);
+          const pendingBlotter = countPendingItems(blotterRequests);
+          return { type: 'blotter', count: pendingBlotter };
+        }).catch(err => {
+          // Silently fail timeout errors - don't spam console
+          if (err.code !== 'ECONNABORTED') {
+            console.error('Error fetching blotter requests count:', err);
+          }
+          return null;
             }).catch(() => null);
           })() : Promise.resolve(null),
         
@@ -532,31 +532,31 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
             }
             // For admin, try status-counts first (more efficient)
             return axiosInstance.get('/asset-requests/status-counts', {
-              timeout: 15000 // 15 second timeout - increased for slow backend
-            }).then(response => {
-              const statusCounts = response.data || {};
-              const pendingAssets = typeof statusCounts.pending === 'number' ? statusCounts.pending : 0;
-              return { type: 'inventory', count: pendingAssets };
-            }).catch(err => {
-              // Silently fail timeout errors - don't spam console
-              if (err.code !== 'ECONNABORTED') {
-                console.error('Error fetching asset status counts:', err);
-              }
-              // Fallback: try full list
-              return axiosInstance.get('/asset-requests', {
-                timeout: 15000, // Increased timeout for fallback
-                params: { per_page: 1000, page: 1 }
-              }).then(response => {
-                const assetRequests = extractArrayFromResponse(response.data, ['asset_requests']);
-                const pendingAssets = countPendingItems(assetRequests);
-                return { type: 'inventory', count: pendingAssets };
-              }).catch(altErr => {
-                // Silently fail timeout errors
-                if (altErr.code !== 'ECONNABORTED') {
-                  console.error('Error fetching asset requests count:', altErr);
-                }
-                return null;
-              });
+          timeout: 15000 // 15 second timeout - increased for slow backend
+        }).then(response => {
+          const statusCounts = response.data || {};
+          const pendingAssets = typeof statusCounts.pending === 'number' ? statusCounts.pending : 0;
+          return { type: 'inventory', count: pendingAssets };
+        }).catch(err => {
+          // Silently fail timeout errors - don't spam console
+          if (err.code !== 'ECONNABORTED') {
+            console.error('Error fetching asset status counts:', err);
+          }
+          // Fallback: try full list
+          return axiosInstance.get('/asset-requests', {
+            timeout: 15000, // Increased timeout for fallback
+            params: { per_page: 1000, page: 1 }
+          }).then(response => {
+            const assetRequests = extractArrayFromResponse(response.data, ['asset_requests']);
+            const pendingAssets = countPendingItems(assetRequests);
+            return { type: 'inventory', count: pendingAssets };
+          }).catch(altErr => {
+            // Silently fail timeout errors
+            if (altErr.code !== 'ECONNABORTED') {
+              console.error('Error fetching asset requests count:', altErr);
+            }
+            return null;
+          });
             });
           })() : Promise.resolve(null)
       ];
@@ -941,44 +941,44 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
                       </div>
                     ) : (
                       <>
-                        <Link
-                          to={item.path}
-                          onClick={() => {
-                            if (window.innerWidth < 1024) {
-                              closeMobileSidebar();
-                            }
-                          }}
-                          className={`relative flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200 group flex-1
-                            ${isCollapsed ? 'justify-center' : ''}
-                            ${isActive
-                              ? "bg-green-700 text-white font-semibold border-l-4 border-lime-300"
-                              : "hover:bg-green-700 hover:text-white text-green-100"
-                            }`}
-                          title={isCollapsed ? item.title : ''}
-                        >
-                          <span className="relative group-hover:scale-110 transition-transform flex-shrink-0">
-                            {item.icon}
-                            {isCollapsed && <NotificationBadge count={getNotificationCount(item)} showDot />}
-                          </span>
-                          {!isCollapsed && (
-                            <span className="truncate text-sm tracking-wide flex-1 relative flex items-center justify-between gap-3 min-w-0">
-                              <span className="truncate flex-1">{item.title}</span>
-                              <NotificationBadge 
-                                count={getNotificationCount(item)} 
-                                variant="circular"
-                                className="flex-shrink-0 ml-auto" 
-                              />
-                            </span>
-                          )}
-                        </Link>
-                        
-                        {hasSubItems && !isCollapsed && (
-                          <button
-                            onClick={() => toggleExpanded(item.title)}
-                            className="px-2 py-3 text-green-100 hover:text-white transition-colors"
-                          >
-                            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                          </button>
+                    <Link
+                      to={item.path}
+                      onClick={() => {
+                        if (window.innerWidth < 1024) {
+                          closeMobileSidebar();
+                        }
+                      }}
+                      className={`relative flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200 group flex-1
+                        ${isCollapsed ? 'justify-center' : ''}
+                        ${isActive
+                          ? "bg-green-700 text-white font-semibold border-l-4 border-lime-300"
+                          : "hover:bg-green-700 hover:text-white text-green-100"
+                        }`}
+                      title={isCollapsed ? item.title : ''}
+                    >
+                      <span className="relative group-hover:scale-110 transition-transform flex-shrink-0">
+                        {item.icon}
+                        {isCollapsed && <NotificationBadge count={getNotificationCount(item)} showDot />}
+                      </span>
+                      {!isCollapsed && (
+                        <span className="truncate text-sm tracking-wide flex-1 relative flex items-center justify-between gap-3 min-w-0">
+                          <span className="truncate flex-1">{item.title}</span>
+                          <NotificationBadge 
+                            count={getNotificationCount(item)} 
+                            variant="circular"
+                            className="flex-shrink-0 ml-auto" 
+                          />
+                        </span>
+                      )}
+                    </Link>
+                    
+                    {hasSubItems && !isCollapsed && (
+                      <button
+                        onClick={() => toggleExpanded(item.title)}
+                        className="px-2 py-3 text-green-100 hover:text-white transition-colors"
+                      >
+                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      </button>
                         )}
                       </>
                     )}

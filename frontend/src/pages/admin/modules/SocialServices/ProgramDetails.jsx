@@ -3696,8 +3696,8 @@ const ProgramDetails = () => {
           <div className={`fixed right-6 bottom-6 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <div className="font-semibold">{toast.type === 'success' ? 'Success' : 'Error'}</div>
-                <div className="text-sm">{toast.message}</div>
+            <div className="font-semibold">{toast.type === 'success' ? 'Success' : 'Error'}</div>
+            <div className="text-sm">{toast.message}</div>
               </div>
               <button
                 onClick={() => setToast(null)}
