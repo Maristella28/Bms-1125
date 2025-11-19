@@ -2709,28 +2709,6 @@ const ProgramDetails = () => {
                           </button>
                         )}
                         </div>
-                        
-                        
-                        {/* Visibility Toggle */}
-                        <div className="flex gap-3">
-                          {beneficiary.visible_to_resident ? (
-                            <button
-                              className="px-4 py-2 rounded-xl text-sm font-semibold transition bg-orange-100 text-orange-700 hover:bg-orange-200"
-                              onClick={() => toggleVisibility(beneficiary, false)}
-                              title="Hide this program from resident's My Benefits"
-                            >
-                              Hide from Resident
-                            </button>
-                          ) : (
-                            <button
-                              className="px-4 py-2 rounded-xl text-sm font-semibold transition bg-blue-100 text-blue-700 hover:bg-blue-200"
-                              onClick={() => toggleVisibility(beneficiary, true)}
-                              title="Show this program in resident's My Benefits"
-                            >
-                              Show to Resident
-                            </button>
-                          )}
-                        </div>
                       </div>
                     </td>
                   </tr>
