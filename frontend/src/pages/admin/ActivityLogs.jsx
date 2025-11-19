@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../../utils/axiosConfig';
-import { format } from 'date-fns';
+import { format, subDays, subMonths, subYears, startOfDay, endOfDay } from 'date-fns';
 import Navbar from "../../components/Navbar";
 import Sidebar from "../../components/Sidebar";
 import { useAdminResponsiveLayout } from "../../hooks/useAdminResponsiveLayout";
@@ -183,6 +183,7 @@ const ActivityLogs = () => {
   const [activeTab, setActiveTab] = useState('all'); // New state for tab navigation
   const [counts, setCounts] = useState(initialCounts);
   const [currentLogTotal, setCurrentLogTotal] = useState(0);
+  const [quickDateFilter, setQuickDateFilter] = useState(''); // Quick date filter selection
 
   const adminLogs = filterLogsByRole(logs, 'admin');
   const residentLogs = filterLogsByRole(logs, 'resident');
@@ -285,6 +286,42 @@ const ActivityLogs = () => {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setFilters(prev => ({ ...prev, user_type: tab, page: 1 }));
+    fetchLogs();
+  };
+
+  const handleQuickDateFilter = (period) => {
+    const today = new Date();
+    let dateFrom = '';
+    let dateTo = format(endOfDay(today), 'yyyy-MM-dd');
+
+    switch (period) {
+      case 'last_week':
+        dateFrom = format(startOfDay(subDays(today, 7)), 'yyyy-MM-dd');
+        break;
+      case 'last_month':
+        dateFrom = format(startOfDay(subMonths(today, 1)), 'yyyy-MM-dd');
+        break;
+      case 'last_year':
+        dateFrom = format(startOfDay(subYears(today, 1)), 'yyyy-MM-dd');
+        break;
+      case 'clear':
+        dateFrom = '';
+        dateTo = '';
+        setQuickDateFilter('');
+        setFilters(prev => ({ ...prev, date_from: '', date_to: '', page: 1 }));
+        fetchLogs();
+        return;
+      default:
+        return;
+    }
+
+    setQuickDateFilter(period);
+    setFilters(prev => ({ 
+      ...prev, 
+      date_from: dateFrom, 
+      date_to: dateTo, 
+      page: 1 
+    }));
     fetchLogs();
   };
 
@@ -580,7 +617,10 @@ const ActivityLogs = () => {
                   <input
                     type="date"
                     value={filters.date_from}
-                    onChange={(e) => handleFilterChange('date_from', e.target.value)}
+                    onChange={(e) => {
+                      handleFilterChange('date_from', e.target.value);
+                      setQuickDateFilter(''); // Clear quick filter when manually selecting dates
+                    }}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -590,10 +630,77 @@ const ActivityLogs = () => {
                   <input
                     type="date"
                     value={filters.date_to}
-                    onChange={(e) => handleFilterChange('date_to', e.target.value)}
+                    onChange={(e) => {
+                      handleFilterChange('date_to', e.target.value);
+                      setQuickDateFilter(''); // Clear quick filter when manually selecting dates
+                    }}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
+              </div>
+
+              {/* Quick Date Filters */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <CalendarIcon className="w-5 h-5 text-blue-600" />
+                  Quick Date Filters
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => handleQuickDateFilter('last_week')}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 ${
+                      quickDateFilter === 'last_week'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                    }`}
+                  >
+                    <CalendarIcon className="w-4 h-4" />
+                    Last Week
+                  </button>
+                  <button
+                    onClick={() => handleQuickDateFilter('last_month')}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 ${
+                      quickDateFilter === 'last_month'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                    }`}
+                  >
+                    <CalendarIcon className="w-4 h-4" />
+                    Last Month
+                  </button>
+                  <button
+                    onClick={() => handleQuickDateFilter('last_year')}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 ${
+                      quickDateFilter === 'last_year'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                    }`}
+                  >
+                    <CalendarIcon className="w-4 h-4" />
+                    Last Year
+                  </button>
+                  {(filters.date_from || filters.date_to) && (
+                    <button
+                      onClick={() => handleQuickDateFilter('clear')}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 bg-white text-red-700 border border-red-300 hover:bg-red-50 hover:border-red-400"
+                    >
+                      <XMarkIcon className="w-4 h-4" />
+                      Clear Dates
+                    </button>
+                  )}
+                </div>
+                {(filters.date_from || filters.date_to) && (
+                  <div className="mt-3 text-xs text-gray-600 flex items-center gap-2">
+                    <ClockIcon className="w-4 h-4" />
+                    <span>
+                      Showing logs from{' '}
+                      <span className="font-semibold">
+                        {filters.date_from ? format(new Date(filters.date_from), 'MMM dd, yyyy') : 'beginning'} to{' '}
+                        {filters.date_to ? format(new Date(filters.date_to), 'MMM dd, yyyy') : 'today'}
+                      </span>
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
