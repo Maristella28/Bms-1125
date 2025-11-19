@@ -986,17 +986,77 @@ const ProgramDetails = () => {
   // Application form handlers
   const createForm = async (formData) => {
     try {
-      const response = await axiosInstance.post('/admin/program-application-forms', {
-        ...formData,
+      // Validate that at least one field is added
+      if (!formData.fields || formData.fields.length === 0) {
+        setToast({ 
+          type: 'error', 
+          message: 'Please add at least one field to the form before saving.' 
+        });
+        return;
+      }
+
+      // Prepare the data for submission
+      const submitData = {
         program_id: id,
-      });
+        title: formData.title || '',
+        description: formData.description || '',
+        status: formData.status || 'draft',
+        allow_multiple_submissions: formData.allow_multiple_submissions || false,
+        form_settings: formData.form_settings || {},
+        fields: formData.fields || []
+      };
+
+      // Handle deadline - convert to proper format and set published_at if needed
+      if (formData.deadline) {
+        try {
+          // Convert deadline from datetime-local format to ISO string
+          const deadlineDate = new Date(formData.deadline);
+          if (!isNaN(deadlineDate.getTime())) {
+            submitData.deadline = deadlineDate.toISOString();
+            
+            // If deadline is set, we need published_at for validation (deadline must be after published_at)
+            // Set published_at to 1 minute before deadline to ensure validation passes
+            const publishedAt = new Date(deadlineDate);
+            publishedAt.setMinutes(publishedAt.getMinutes() - 1);
+            
+            // Ensure published_at is not in the future (use now if deadline is very close)
+            const now = new Date();
+            if (publishedAt < now) {
+              submitData.published_at = now.toISOString();
+            } else {
+              submitData.published_at = publishedAt.toISOString();
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing deadline:', e);
+          // If deadline parsing fails, don't include it
+        }
+      }
+
+      // Handle published_at if status is published
+      if (formData.status === 'published' && !submitData.published_at) {
+        submitData.published_at = new Date().toISOString();
+      }
+
+      const response = await axiosInstance.post('/admin/program-application-forms', submitData);
 
       setApplicationForms([...applicationForms, response.data.data]);
       setToast({ type: 'success', message: 'Application form created successfully!' });
       setShowFormBuilderModal(false);
     } catch (error) {
       console.error('Error creating application form:', error);
-      setToast({ type: 'error', message: error.response?.data?.message || 'Failed to create application form' });
+      
+      // Extract validation errors if available
+      let errorMessage = 'Failed to create application form';
+      if (error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        const errorMessages = Object.values(errors).flat();
+        errorMessage = errorMessages.join(', ') || errorMessage;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      setToast({ type: 'error', message: errorMessage });
     }
   };
 
@@ -1007,7 +1067,48 @@ const ProgramDetails = () => {
 
   const updateForm = async (formData) => {
     try {
-      const response = await axiosInstance.put(`/admin/program-application-forms/${editingForm.id}`, formData);
+      // Validate that at least one field is added
+      if (!formData.fields || formData.fields.length === 0) {
+        setToast({ 
+          type: 'error', 
+          message: 'Please add at least one field to the form before saving.' 
+        });
+        return;
+      }
+
+      // Prepare the data for submission
+      const submitData = {
+        title: formData.title || '',
+        description: formData.description || '',
+        status: formData.status || 'draft',
+        allow_multiple_submissions: formData.allow_multiple_submissions || false,
+        form_settings: formData.form_settings || {},
+        fields: formData.fields || []
+      };
+
+      // Handle deadline - convert to proper format
+      if (formData.deadline) {
+        try {
+          const deadlineDate = new Date(formData.deadline);
+          if (!isNaN(deadlineDate.getTime())) {
+            submitData.deadline = deadlineDate.toISOString();
+            
+            // If deadline is set and status is published, ensure published_at is set
+            if (formData.status === 'published' && !formData.published_at) {
+              submitData.published_at = new Date().toISOString();
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing deadline:', e);
+        }
+      }
+
+      // Handle published_at if status is published
+      if (formData.status === 'published' && !submitData.published_at) {
+        submitData.published_at = new Date().toISOString();
+      }
+
+      const response = await axiosInstance.put(`/admin/program-application-forms/${editingForm.id}`, submitData);
 
       setApplicationForms(applicationForms.map(f => f.id === editingForm.id ? response.data.data : f));
       setEditingForm(null);
@@ -1015,7 +1116,18 @@ const ProgramDetails = () => {
       setToast({ type: 'success', message: 'Application form updated successfully!' });
     } catch (error) {
       console.error('Error updating application form:', error);
-      setToast({ type: 'error', message: error.response?.data?.message || 'Failed to update application form' });
+      
+      // Extract validation errors if available
+      let errorMessage = 'Failed to update application form';
+      if (error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        const errorMessages = Object.values(errors).flat();
+        errorMessage = errorMessages.join(', ') || errorMessage;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      setToast({ type: 'error', message: errorMessage });
     }
   };
 
