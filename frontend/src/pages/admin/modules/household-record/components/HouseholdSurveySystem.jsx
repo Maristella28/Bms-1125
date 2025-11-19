@@ -412,8 +412,15 @@ const HouseholdSurveySystem = ({ household, onClose, onSurveySent }) => {
                   : 'hover:from-blue-700 hover:to-indigo-700'
               }`}
             >
-              <PaperAirplaneIcon className="w-5 h-5" />
-              {isSending ? 'Sending...' : 'Send Survey'}
+              {notificationMethod === 'print' ? (
+                <DocumentTextIcon className="w-5 h-5" />
+              ) : (
+                <PaperAirplaneIcon className="w-5 h-5" />
+              )}
+              {isSending 
+                ? (notificationMethod === 'print' ? 'Generating...' : 'Sending...') 
+                : (notificationMethod === 'print' ? 'Print Survey' : 'Send Survey')
+              }
             </button>
           </div>
         </div>
