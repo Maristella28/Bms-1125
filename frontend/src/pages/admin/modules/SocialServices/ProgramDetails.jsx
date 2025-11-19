@@ -996,13 +996,22 @@ const ProgramDetails = () => {
       }
 
       // Prepare the data for submission
+      // Clean up form_settings - only send if it's a non-empty object
+      let formSettings = null;
+      if (formData.form_settings && typeof formData.form_settings === 'object') {
+        const settingsKeys = Object.keys(formData.form_settings);
+        if (settingsKeys.length > 0) {
+          formSettings = formData.form_settings;
+        }
+      }
+      
       const submitData = {
         program_id: id,
         title: formData.title || '',
         description: formData.description || '',
         status: formData.status || 'draft',
         allow_multiple_submissions: formData.allow_multiple_submissions || false,
-        form_settings: formData.form_settings || {},
+        form_settings: formSettings,
         fields: (formData.fields || []).map(field => {
           // Clean up field_options - only send if it's a non-empty array
           let fieldOptions = null;
@@ -1072,6 +1081,8 @@ const ProgramDetails = () => {
       setShowFormBuilderModal(false);
     } catch (error) {
       console.error('Error creating application form:', error);
+      console.error('Error response data:', error.response?.data);
+      console.error('Request payload:', submitData);
       
       // Extract validation errors if available
       let errorMessage = 'Failed to create application form';
@@ -1079,6 +1090,8 @@ const ProgramDetails = () => {
         const errors = error.response.data.errors;
         const errorMessages = Object.values(errors).flat();
         errorMessage = errorMessages.join(', ') || errorMessage;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
@@ -1104,12 +1117,21 @@ const ProgramDetails = () => {
       }
 
       // Prepare the data for submission
+      // Clean up form_settings - only send if it's a non-empty object
+      let formSettings = null;
+      if (formData.form_settings && typeof formData.form_settings === 'object') {
+        const settingsKeys = Object.keys(formData.form_settings);
+        if (settingsKeys.length > 0) {
+          formSettings = formData.form_settings;
+        }
+      }
+      
       const submitData = {
         title: formData.title || '',
         description: formData.description || '',
         status: formData.status || 'draft',
         allow_multiple_submissions: formData.allow_multiple_submissions || false,
-        form_settings: formData.form_settings || {},
+        form_settings: formSettings,
         fields: (formData.fields || []).map(field => {
           // Clean up field_options - only send if it's a non-empty array
           let fieldOptions = null;
