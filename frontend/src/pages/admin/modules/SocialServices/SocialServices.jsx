@@ -3707,7 +3707,7 @@ const SocialServices = () => {
                   <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2 mb-4">
                     <HeartIcon className="w-5 h-5" /> Assistance Details
                   </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-blue-700 mb-1">Beneficiary Type</label>
                       <input
@@ -3721,19 +3721,47 @@ const SocialServices = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-blue-700 mb-1">Assistance Type</label>
-                      <input
-                        type="text"
-                        value={programForm.assistanceType}
-                        onChange={e => setProgramForm(f => ({ ...f, assistanceType: e.target.value }))}
-                        className="w-full border border-blue-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white shadow-sm placeholder-blue-300 text-blue-900 hover:shadow-md focus:shadow-lg"
-                        placeholder="Enter assistance type"
-                        required
-                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setProgramForm(f => ({ ...f, assistanceType: 'Monetary Assistance' }))}
+                          className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all duration-300 shadow-sm hover:shadow-md ${
+                            programForm.assistanceType === 'Monetary Assistance'
+                              ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white ring-2 ring-green-400'
+                              : 'bg-white border-2 border-blue-200 text-blue-700 hover:border-blue-400'
+                          }`}
+                        >
+                          <div className="flex items-center justify-center gap-2">
+                            <CreditCardIcon className="w-5 h-5" />
+                            <span className="text-sm font-semibold">Monetary Assistance</span>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setProgramForm(f => ({ ...f, assistanceType: 'Non-monetary Assistance' }))}
+                          className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all duration-300 shadow-sm hover:shadow-md ${
+                            programForm.assistanceType === 'Non-monetary Assistance'
+                              ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white ring-2 ring-blue-400'
+                              : 'bg-white border-2 border-blue-200 text-blue-700 hover:border-blue-400'
+                          }`}
+                        >
+                          <div className="flex items-center justify-center gap-2">
+                            <HeartIcon className="w-5 h-5" />
+                            <span className="text-sm font-semibold">Non-monetary Assistance</span>
+                          </div>
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-blue-700 mb-1">Amount (₱)</label>
+                  </div>
+                  {programForm.assistanceType === 'Monetary Assistance' && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-blue-700 mb-1">
+                        Amount (₱) <span className="text-red-500">*</span>
+                      </label>
                       <input
                         type="number"
+                        min="0"
+                        step="0.01"
                         value={programForm.amount}
                         onChange={e => setProgramForm(f => ({ ...f, amount: e.target.value }))}
                         className="w-full border border-blue-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white shadow-sm placeholder-blue-300 text-blue-900 hover:shadow-md focus:shadow-lg"
@@ -3741,7 +3769,7 @@ const SocialServices = () => {
                         required
                       />
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Form Messages */}
@@ -3787,6 +3815,18 @@ const SocialServices = () => {
                       setProgramFormError('');
                       setProgramFormSuccess('');
                       
+                      // Validate assistance type is selected
+                      if (!programForm.assistanceType) {
+                        setProgramFormError('Please select an assistance type.');
+                        return;
+                      }
+                      
+                      // Validate amount is required for monetary assistance
+                      if (programForm.assistanceType === 'Monetary Assistance' && (!programForm.amount || parseFloat(programForm.amount) <= 0)) {
+                        setProgramFormError('Amount is required for monetary assistance.');
+                        return;
+                      }
+                      
                       // Validate payout date is not in the past
                       if (programForm.payoutDate && new Date(programForm.payoutDate) < new Date()) {
                         setProgramFormError('Payout date cannot be set to a past date/time.');
@@ -3803,7 +3843,7 @@ const SocialServices = () => {
                           status: programForm.status,
                           beneficiary_type: programForm.beneficiaryType,
                           assistance_type: programForm.assistanceType,
-                          amount: programForm.amount,
+                          amount: programForm.assistanceType === 'Monetary Assistance' ? programForm.amount : (programForm.amount || '0'),
                           max_beneficiaries: programForm.maxBeneficiaries,
                           payout_date: programForm.payoutDate || null,
                         };
