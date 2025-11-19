@@ -629,10 +629,14 @@ class StaffController extends Controller
                     return strpos($key, 'residents') !== false;
                 }),
                 'residentsRecords_main_records_view' => $staff->module_permissions['residentsRecords_main_records_view'] ?? 'NOT_SET',
+                'residentsRecords_main_records_edit' => $staff->module_permissions['residentsRecords_main_records_edit'] ?? 'NOT_SET',
+                'residentsRecords_main_records_disable' => $staff->module_permissions['residentsRecords_main_records_disable'] ?? 'NOT_SET',
                 'debug_db_check' => [
-                    'raw' => $directDbCheck,
-                    'decoded' => $decodedDbCheck,
-                    'residentsRecords_main_records_view' => $decodedDbCheck['residentsRecords_main_records_view'] ?? 'NOT_SET',
+                    'raw' => $finalDbCheck,
+                    'decoded' => $finalDecoded,
+                    'residentsRecords_main_records_view' => $finalDecoded['residentsRecords_main_records_view'] ?? 'NOT_SET',
+                    'residentsRecords_main_records_edit' => $finalDecoded['residentsRecords_main_records_edit'] ?? 'NOT_SET',
+                    'residentsRecords_main_records_disable' => $finalDecoded['residentsRecords_main_records_disable'] ?? 'NOT_SET',
                 ]
             ]);
 
