@@ -717,8 +717,7 @@ const AvatarImg = ({ avatarPath }) => {
 
 // Actions Dropdown Component for Residents
 const ActionsDropdown = ({ resident, onEdit, onDisable, onView }) => {
-  const authContext = useAuth();
-  const user = authContext?.user;
+  const { user } = useAuth();
   const { canPerformAction } = usePermissions();
   const buttonRef = useRef(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
@@ -735,7 +734,7 @@ const ActionsDropdown = ({ resident, onEdit, onDisable, onView }) => {
   
   // Debug logging for staff users
   if (user?.role === 'staff') {
-    const perms = authContext?.user?.module_permissions || {};
+    const perms = user?.module_permissions || {};
     console.log('ActionsDropdown permissions check:', {
       userRole: user?.role,
       isAdmin,
@@ -858,14 +857,23 @@ const ActionsDropdown = ({ resident, onEdit, onDisable, onView }) => {
       menuItems: menuItems.map(item => item.label),
       canView,
       canEdit,
-      canDisable
+      canDisable,
+      hasModulePermissions: !!user?.module_permissions,
+      modulePermissionsKeys: Object.keys(user?.module_permissions || {}),
+      residentsKeys: Object.keys(user?.module_permissions || {}).filter(k => k.includes('residents'))
     });
   }
   
   // If no actions are available, don't show the dropdown
   if (menuItems.length === 0) {
     if (user?.role === 'staff') {
-      console.warn('ActionsDropdown: No menu items available - all permissions are false');
+      console.warn('ActionsDropdown: No menu items available - all permissions are false', {
+        canView,
+        canEdit,
+        canDisable,
+        module_permissions: user?.module_permissions,
+        userObject: user
+      });
     }
     return null;
   }
@@ -943,9 +951,19 @@ const ActionsDropdown = ({ resident, onEdit, onDisable, onView }) => {
 const ResidentsRecords = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, forceRefresh } = useAuth();
   const { canPerformAction } = usePermissions();
   const { mainClasses } = useAdminResponsiveLayout();
+  
+  // Ensure permissions are loaded for staff users
+  useEffect(() => {
+    if (user?.role === 'staff' && (!user?.module_permissions || Object.keys(user.module_permissions).length <= 1)) {
+      console.log('ResidentsRecords: Staff user permissions not loaded, refreshing...');
+      forceRefresh().catch(err => {
+        console.error('Failed to refresh user permissions:', err);
+      });
+    }
+  }, [user?.role, user?.module_permissions, forceRefresh]);
   
   // Handle section query parameter for navigation
   useEffect(() => {
