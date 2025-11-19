@@ -226,10 +226,23 @@ const StaffManagement = () => {
             base[uiKey].access = true;
           }
         } else {
-          // Simple boolean sub-permission
+          // Simple boolean sub-permission (like document_requests, asset_management, disabled_residents)
           base[uiKey].sub_permissions[subKey] = normalizedValue;
           if (normalizedValue) {
             base[uiKey].access = true;
+          }
+          
+          // Debug log for simple sub-permissions
+          if ((uiKey === 'documents' && (subKey === 'document_requests' || subKey === 'document_records')) ||
+              (uiKey === 'inventory' && (subKey === 'asset_management' || subKey === 'asset_posts_management' || subKey === 'asset_tracking')) ||
+              (uiKey === 'residents' && subKey === 'disabled_residents')) {
+            console.log(`✅ mapApiToUiPermissions: Setting simple sub-permission ${uiKey}.${subKey} = ${normalizedValue}`, {
+              apiKey,
+              uiKey,
+              subKey,
+              value,
+              normalizedValue
+            });
           }
         }
       } else if (parts.length >= 3) {
@@ -1337,9 +1350,23 @@ const StaffManagement = () => {
                                           }
                                         });
                                       } else {
-                                        // Simple boolean sub-permission
-                                        normalizedPermissions[uiKey].sub_permissions[subKey] = 
-                                          existingSubPerm !== undefined ? existingSubPerm : false;
+                                        // Simple boolean sub-permission (like document_requests, asset_management, disabled_residents)
+                                        // Ensure it's always a boolean value
+                                        const finalSubValue = existingSubPerm !== undefined 
+                                          ? Boolean(existingSubPerm) 
+                                          : false;
+                                        normalizedPermissions[uiKey].sub_permissions[subKey] = finalSubValue;
+                                        
+                                        // Debug log for simple sub-permissions
+                                        if ((uiKey === 'documents' && (subKey === 'document_requests' || subKey === 'document_records')) ||
+                                            (uiKey === 'inventory' && (subKey === 'asset_management' || subKey === 'asset_posts_management' || subKey === 'asset_tracking')) ||
+                                            (uiKey === 'residents' && subKey === 'disabled_residents')) {
+                                          console.log(`Normalizing simple sub-permission ${uiKey}.${subKey}:`, {
+                                            existingSubPerm,
+                                            finalSubValue,
+                                            type: typeof existingSubPerm
+                                          });
+                                        }
                                       }
                                     });
                                   } else {
@@ -1499,6 +1526,21 @@ const StaffManagement = () => {
                             // Check if this sub-permission has nested sub-permissions
                             const hasNestedSubPermissions = typeof subDefault === 'object' && subDefault !== null && subDefault.sub_permissions;
                             
+                            // Get the checked value - for simple sub-permissions, read the boolean value directly
+                            // For nested sub-permissions, read the access property
+                            const checkedValue = hasNestedSubPermissions 
+                              ? Boolean(currentModulePerm?.sub_permissions?.[subKey]?.access) 
+                              : Boolean(currentModulePerm?.sub_permissions?.[subKey]);
+                            
+                            // Debug log for simple sub-permissions that aren't working
+                            if (!hasNestedSubPermissions && (subKey === 'document_requests' || subKey === 'document_records' || subKey === 'asset_management' || subKey === 'asset_posts_management' || subKey === 'asset_tracking' || subKey === 'disabled_residents')) {
+                              console.log(`Reading simple sub-permission ${moduleKey}.${subKey}:`, {
+                                checkedValue,
+                                fromState: currentModulePerm?.sub_permissions?.[subKey],
+                                fullPath: `editingStaff.module_permissions.${moduleKey}.sub_permissions.${subKey}`
+                              });
+                            }
+                            
                             return (
                               <div key={subKey} className="bg-gray-50 rounded-lg p-3">
                                 {/* Main sub-permission toggle */}
@@ -1510,9 +1552,7 @@ const StaffManagement = () => {
                                 <label className="relative inline-flex items-center cursor-pointer">
                                   <input
                                     type="checkbox"
-                                      checked={hasNestedSubPermissions 
-                                        ? Boolean(currentModulePerm?.sub_permissions?.[subKey]?.access) 
-                                        : Boolean(currentModulePerm?.sub_permissions?.[subKey])}
+                                    checked={checkedValue}
                                     onChange={(e) => {
                                         const newValue = e.target.checked;
                                         // Use the same simple pattern as social_services - read from prev state
@@ -1545,13 +1585,17 @@ const StaffManagement = () => {
                                               }
                                             };
                                           } else {
-                                            // Handle simple boolean sub-permission (like programs, beneficiaries)
+                                            // Handle simple boolean sub-permission (like programs, beneficiaries, document_requests, asset_management)
+                                            // If enabling a sub-permission, ensure the parent module is also enabled
+                                            const updatedModuleAccess = newValue ? true : prevModulePerm.access;
+                                            
                                             return {
                                               ...prev,
                                               module_permissions: {
                                                 ...(prev.module_permissions || {}),
                                                 [moduleKey]: {
                                                   ...prevModulePerm,
+                                                  access: updatedModuleAccess,
                                                   sub_permissions: {
                                                     ...(prevModulePerm.sub_permissions || {}),
                                                     [subKey]: newValue
