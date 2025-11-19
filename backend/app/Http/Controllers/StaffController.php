@@ -302,10 +302,10 @@ class StaffController extends Controller
         }
 
         try {
-            DB::beginTransaction();
-            
-            // Find the staff member
+            // Find the staff member BEFORE starting transaction
             $staff = Staff::findOrFail($id);
+            
+            DB::beginTransaction();
             
             // Validate the request data
             // Note: module_permissions.* can be nested (e.g., residentsRecords_main_records_edit)
@@ -402,6 +402,9 @@ class StaffController extends Controller
                 ]);
             }
             
+            // Get current permissions from database to preserve existing nested permissions
+            $currentPermissions = $staff->module_permissions ?? [];
+            
             // Define all expected permission keys with default false values
             // Note: We only set defaults for main module keys, not nested sub-permissions
             // Nested permissions (e.g., residentsRecords_main_records_view) should come from incomingPermissions
@@ -422,10 +425,27 @@ class StaffController extends Controller
                 'activityLogs' => false
             ];
             
-            // IMPORTANT: array_merge will overwrite defaults with incoming, but we need ALL keys from incoming
-            // Use array_merge to combine, which will preserve all keys from $incomingPermissions
-            // including nested ones like residentsRecords_main_records_view
-            $finalPermissions = array_merge($defaultPermissions, $incomingPermissions);
+            // IMPORTANT: Merge strategy to preserve ALL existing nested permissions:
+            // 1. Start with current permissions (preserves ALL existing nested permissions from DB)
+            // 2. Apply incoming permissions (updates only the ones being changed)
+            // 3. Apply defaults for main module keys that don't exist
+            // This ensures:
+            // - All existing nested permissions are preserved
+            // - Only permissions in incomingPermissions are updated
+            // - Main module keys always have a value
+            $finalPermissions = $currentPermissions; // Start with existing permissions
+            
+            // Update with incoming permissions (only the ones being changed)
+            foreach ($incomingPermissions as $key => $value) {
+                $finalPermissions[$key] = $value;
+            }
+            
+            // Ensure main module keys exist (merge defaults for missing main keys only)
+            foreach ($defaultPermissions as $key => $defaultValue) {
+                if (!isset($finalPermissions[$key])) {
+                    $finalPermissions[$key] = $defaultValue;
+                }
+            }
             
             // Debug: Check if nested permissions are present
             $nestedKeys = array_filter(array_keys($finalPermissions), function($key) {
@@ -454,11 +474,6 @@ class StaffController extends Controller
                 ]))
             ]);
             
-            // Update the staff permissions
-            // IMPORTANT: Laravel's array cast should handle JSON encoding automatically
-            // But let's ensure we're setting it correctly
-            $staff->module_permissions = $finalPermissions;
-            
             // Log the permissions being saved BEFORE save
             Log::info('Saving staff permissions - BEFORE save', [
                 'staff_id' => $staff->id,
@@ -467,32 +482,53 @@ class StaffController extends Controller
                 'residentsRecords_main_records_edit' => $finalPermissions['residentsRecords_main_records_edit'] ?? 'NOT_SET',
                 'residentsRecords_main_records_disable' => $finalPermissions['residentsRecords_main_records_disable'] ?? 'NOT_SET',
                 'residentsRecords_main_records' => $finalPermissions['residentsRecords_main_records'] ?? 'NOT_SET',
-                'model_module_permissions_before' => $staff->module_permissions,
+                'current_db_value' => $staff->module_permissions,
             ]);
             
-            // Save the model
-            // IMPORTANT: Use direct DB update to ensure the JSON is properly encoded
-            // Laravel's array cast might not work correctly with update() in all cases
-            Log::info('About to save permissions', [
+            // Use direct DB update to ensure it always works
+            // Laravel's array comparison might not detect changes correctly
+            $jsonEncoded = json_encode($finalPermissions, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            
+            // Get current value for comparison
+            $currentDbValue = \DB::table('staff')->where('id', $staff->id)->value('module_permissions');
+            $currentDecoded = json_decode($currentDbValue, true);
+            $currentJson = json_encode($currentDecoded ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $isDifferent = $currentJson !== $jsonEncoded;
+            
+            Log::info('About to save permissions using direct DB update', [
                 'staff_id' => $staff->id,
                 'final_permissions_count' => count($finalPermissions),
-                'sample_keys' => array_slice(array_keys($finalPermissions), 0, 10),
+                'json_length' => strlen($jsonEncoded),
+                'is_different' => $isDifferent,
+                'current_json_length' => strlen($currentJson),
                 'residentsRecords_main_records_view' => $finalPermissions['residentsRecords_main_records_view'] ?? 'NOT_SET',
+                'current_has_view' => isset($currentDecoded['residentsRecords_main_records_view']) ? $currentDecoded['residentsRecords_main_records_view'] : 'NOT_SET',
             ]);
             
-            // Use direct DB update to ensure proper JSON encoding
-            // This bypasses any potential issues with Laravel's array cast
-            $jsonEncoded = json_encode($finalPermissions, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $dbUpdateResult = \DB::table('staff')
-                ->where('id', $staff->id)
-                ->update(['module_permissions' => $jsonEncoded]);
+            // Direct DB update - this bypasses Laravel's change detection
+            // Use DB::update() with raw SQL to ensure it executes within the transaction
+            $dbUpdateResult = \DB::update(
+                'UPDATE staff SET module_permissions = ?, updated_at = ? WHERE id = ?',
+                [$jsonEncoded, now(), $staff->id]
+            );
             
             Log::info('Direct DB update result', [
                 'staff_id' => $staff->id,
                 'update_result' => $dbUpdateResult,
-                'json_encoded_length' => strlen($jsonEncoded),
-                'residentsRecords_main_records_view_in_json' => isset($finalPermissions['residentsRecords_main_records_view']) ? 'PRESENT' : 'NOT_PRESENT',
+                'rows_affected' => $dbUpdateResult,
+                'json_length' => strlen($jsonEncoded),
+                'residentsRecords_main_records_view_in_json' => strpos($jsonEncoded, '"residentsRecords_main_records_view":true') !== false ? 'PRESENT' : 'NOT_PRESENT',
             ]);
+            
+            // Verify the update actually happened
+            if ($dbUpdateResult === 0 && $isDifferent) {
+                Log::error('CRITICAL: DB update returned 0 but data is different!', [
+                    'staff_id' => $staff->id,
+                    'current_value' => $currentDbValue,
+                    'new_value' => $jsonEncoded,
+                ]);
+                throw new \Exception('Failed to update staff permissions in database');
+            }
             
             // Also update the model instance to keep it in sync
             $staff->module_permissions = $finalPermissions;
