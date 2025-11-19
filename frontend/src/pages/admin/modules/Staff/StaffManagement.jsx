@@ -1401,7 +1401,9 @@ const StaffManagement = () => {
                         <div className="space-y-3 mt-4 pt-4 border-t border-gray-100">
                           <h4 className="text-sm font-medium text-gray-700 mb-3">Sub-sections:</h4>
                           {Object.entries(moduleConfig.sub_permissions).map(([subKey, subDefault]) => {
-                            const subPermission = currentPermission.sub_permissions?.[subKey];
+                            // CRITICAL: Read from editingStaff state directly to ensure we get latest values
+                            const currentModulePerm = editingStaff.module_permissions?.[moduleKey];
+                            const subPermission = currentModulePerm?.sub_permissions?.[subKey];
                             const subLabel = subKey.replace(/_/g, ' ');
                             
                             // Check if this sub-permission has nested sub-permissions
@@ -1478,8 +1480,21 @@ const StaffManagement = () => {
                                 {hasNestedSubPermissions && (
                                   <div className="ml-6 mt-3 space-y-2 pt-3 border-t border-gray-200">
                                     {Object.entries(subDefault.sub_permissions).map(([nestedKey, nestedDefault]) => {
-                                      const nestedPermission = subPermission.sub_permissions?.[nestedKey] || false;
+                                      // CRITICAL: Read from editingStaff state directly, not from the closure variable
+                                      // This ensures we always get the latest state value
+                                      const currentModulePerm = editingStaff.module_permissions?.[moduleKey];
+                                      const currentSubPerm = currentModulePerm?.sub_permissions?.[subKey];
+                                      const nestedPermission = currentSubPerm?.sub_permissions?.[nestedKey] ?? false;
                                       const nestedLabel = nestedKey.replace(/_/g, ' ');
+                                      
+                                      // Debug log to see what we're reading
+                                      if (moduleKey === 'residents' && subKey === 'main_records') {
+                                        console.log(`Reading nested permission ${nestedKey}:`, {
+                                          nestedPermission,
+                                          fromState: editingStaff.module_permissions?.residents?.sub_permissions?.main_records?.sub_permissions?.[nestedKey],
+                                          fullPath: `editingStaff.module_permissions.${moduleKey}.sub_permissions.${subKey}.sub_permissions.${nestedKey}`
+                                        });
+                                      }
                                       
                                       return (
                                         <div key={nestedKey} className="flex items-center justify-between p-2 bg-white rounded-md">
@@ -1500,8 +1515,12 @@ const StaffManagement = () => {
                                                   const defaultSubPerm = defaultPermissions[moduleKey]?.sub_permissions?.[subKey];
                                                   const defaultNested = defaultSubPerm?.sub_permissions || {};
                                                   
-                                                  // Get current nested permissions
-                                                  const currentNested = subPermission.sub_permissions || {};
+                                                  // CRITICAL: Read current state from prev, not from closure variables
+                                                  const prevModulePerm = prev.module_permissions?.[moduleKey] || { access: false, sub_permissions: {} };
+                                                  const prevSubPerm = prevModulePerm.sub_permissions?.[subKey] || {};
+                                                  const prevNested = (typeof prevSubPerm === 'object' && prevSubPerm !== null && prevSubPerm.sub_permissions) 
+                                                    ? prevSubPerm.sub_permissions 
+                                                    : {};
                                                   
                                                   // Preserve all existing nested permissions and update only the one being toggled
                                                   const updatedNested = {};
@@ -1512,25 +1531,29 @@ const StaffManagement = () => {
                                                       // Update the one being toggled
                                                       updatedNested[key] = newValue;
                                                     } else {
-                                                      // Preserve existing value or default to false
-                                                      updatedNested[key] = currentNested[key] !== undefined ? currentNested[key] : false;
+                                                      // Preserve existing value from state or default to false
+                                                      updatedNested[key] = prevNested[key] !== undefined ? prevNested[key] : false;
                                                     }
                                                   });
                                                   
                                                   // Also include any keys that exist in current but not in default (for safety)
-                                                  Object.keys(currentNested).forEach(key => {
+                                                  Object.keys(prevNested).forEach(key => {
                                                     if (!updatedNested.hasOwnProperty(key)) {
-                                                      updatedNested[key] = currentNested[key];
+                                                      updatedNested[key] = prevNested[key];
                                                     }
                                                   });
                                                   
+                                                  // Determine if sub-permission access should be true
+                                                  const hasAnyNestedTrue = Object.values(updatedNested).some(v => v === true);
+                                                  const subAccess = newValue ? true : (hasAnyNestedTrue ? (prevSubPerm.access ?? false) : false);
+                                                  
                                                   const updatedPermission = {
-                                                    ...currentPermission,
+                                                    ...prevModulePerm,
                                                     sub_permissions: {
-                                                      ...(currentPermission.sub_permissions || {}),
+                                                      ...(prevModulePerm.sub_permissions || {}),
                                                       [subKey]: {
-                                                        ...subPermission,
-                                                        access: newValue ? true : (Object.values(updatedNested).some(v => v === true) ? subPermission.access : false),
+                                                        ...(typeof prevSubPerm === 'object' && prevSubPerm !== null ? prevSubPerm : {}),
+                                                        access: subAccess,
                                                         sub_permissions: updatedNested
                                                       }
                                                     }
@@ -1549,8 +1572,9 @@ const StaffManagement = () => {
                                                     }
                                                   };
                                                   
-                                                  console.log('Updated state:', JSON.stringify(updated.module_permissions[moduleKey], null, 2));
-                                                  console.log('Nested permissions preserved:', Object.keys(updatedNested));
+                                                  console.log('✅ Updated state after toggle:', JSON.stringify(updated.module_permissions[moduleKey], null, 2));
+                                                  console.log('✅ Nested permissions preserved:', Object.keys(updatedNested));
+                                                  console.log('✅ New value for', nestedKey, ':', newValue);
                                                   return updated;
                                                 });
                                               }}
