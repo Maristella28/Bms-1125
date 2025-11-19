@@ -983,4 +983,61 @@ class StaffController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get blotter requests for staff
+     */
+    public function blotterRequests(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            // Debug logging
+            Log::info('StaffController@blotterRequests - User ID: ' . $user->id);
+            
+            // Get staff record
+            $staff = Staff::where('user_id', $user->id)->first();
+            
+            if (!$staff) {
+                Log::warning('StaffController@blotterRequests - Staff record not found for user ID: ' . $user->id);
+                return response()->json([
+                    'message' => 'Staff record not found'
+                ], 404);
+            }
+
+            // Debug logging
+            Log::info('StaffController@blotterRequests - Staff found: ' . $staff->id);
+            Log::info('StaffController@blotterRequests - Staff module_permissions: ' . json_encode($staff->module_permissions));
+
+            // Check if staff has blotter permission - but allow access if no permissions are set (fallback for existing staff)
+            $permissions = $staff->module_permissions ?? [];
+            $hasBlotterPermission = isset($permissions['blotterRecords']) && $permissions['blotterRecords'];
+            $hasNoPermissionsSet = empty($permissions) || count(array_filter($permissions)) === 0;
+            
+            if (!$hasBlotterPermission && !$hasNoPermissionsSet) {
+                Log::warning('StaffController@blotterRequests - No blotter permission. Permissions: ' . json_encode($permissions));
+                return response()->json([
+                    'message' => 'You do not have permission to access blotter requests data',
+                    'debug' => [
+                        'permissions' => $permissions,
+                        'has_blotterRecords_key' => isset($permissions['blotterRecords']),
+                        'blotterRecords_value' => $permissions['blotterRecords'] ?? 'not_set'
+                    ]
+                ], 403);
+            }
+
+            // Get blotter requests data (same as admin endpoint but with staff permission check)
+            $requests = \App\Models\BlotterRequest::with(['user', 'resident'])->orderBy('created_at', 'desc')->get();
+            
+            Log::info('StaffController@blotterRequests - Successfully fetched ' . $requests->count() . ' blotter requests');
+            
+            return response()->json($requests);
+            
+        } catch (\Exception $e) {
+            Log::error('Error fetching blotter requests for staff: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to fetch blotter requests data'
+            ], 500);
+        }
+    }
 }

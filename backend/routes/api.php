@@ -546,6 +546,7 @@ Route::middleware(['auth:sanctum', 'throttle:200,1', 'sanitize'])->group(functio
     Route::get('/staff/dashboard', [StaffController::class, 'dashboard']);
     Route::get('/staff/residents-list', [StaffController::class, 'residentsList']);
     Route::get('/staff/document-requests', [StaffController::class, 'documentRequests']);
+    Route::get('/staff/blotter-requests', [StaffController::class, 'blotterRequests']);
 
     // 🧾 Authenticated users (incl. admin): Read residents
     // Apply profile.complete middleware to protect resident-facing modules for incomplete profiles

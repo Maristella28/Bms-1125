@@ -502,22 +502,24 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
         
         // Fetch pending blotter requests count
         // Only fetch if user has blotter module access
-        // For staff, try to access /admin/blotter-requests (may fail if route is admin-only)
-        // For admin, use /admin/blotter-requests
+        // Use role-appropriate endpoint: admin uses /admin/blotter-requests, staff uses /staff/blotter-requests
         (user?.role === 'admin' || (user?.role === 'staff' && hasModuleAccess('blotter')))
-        ? axiosInstance.get('/admin/blotter-requests', {
-          timeout: 15000 // 15 second timeout - increased for slow backend
-        }).then(response => {
-          const blotterRequests = extractArrayFromResponse(response.data, ['blotter_requests']);
-          const pendingBlotter = countPendingItems(blotterRequests);
-          return { type: 'blotter', count: pendingBlotter };
-        }).catch(err => {
-          // Silently fail timeout errors and 403 errors for staff (route may be admin-only)
-          if (err.code !== 'ECONNABORTED' && err.response?.status !== 403) {
-            console.error('Error fetching blotter requests count:', err);
-          }
-          return null;
-        }).catch(() => null) : Promise.resolve(null),
+        ? (() => {
+            const blotterEndpoint = user?.role === 'admin' ? '/admin/blotter-requests' : '/staff/blotter-requests';
+            return axiosInstance.get(blotterEndpoint, {
+              timeout: 15000 // 15 second timeout - increased for slow backend
+            }).then(response => {
+              const blotterRequests = extractArrayFromResponse(response.data, ['blotter_requests']);
+              const pendingBlotter = countPendingItems(blotterRequests);
+              return { type: 'blotter', count: pendingBlotter };
+            }).catch(err => {
+              // Silently fail timeout errors - don't spam console
+              if (err.code !== 'ECONNABORTED') {
+                console.error('Error fetching blotter requests count:', err);
+              }
+              return null;
+            }).catch(() => null);
+          })() : Promise.resolve(null),
         
         // Fetch pending asset requests count (use efficient endpoint)
         // Only fetch if user has inventory module access
