@@ -1703,7 +1703,7 @@ const ProgramDetails = () => {
         return;
       }
 
-      // Convert to ISO string for backend
+      // Create Date object from datetime-local value (which is in local timezone)
       const payoutDateTimeObj = new Date(dateTimeValue);
       
       // Validate the date is valid
@@ -1728,7 +1728,27 @@ const ProgramDetails = () => {
         return;
       }
       
-      const payoutDateTime = payoutDateTimeObj.toISOString();
+      // Format date in local timezone (Philippine time)
+      // Get local time components to preserve the timezone
+      const year = payoutDateTimeObj.getFullYear();
+      const month = String(payoutDateTimeObj.getMonth() + 1).padStart(2, '0');
+      const day = String(payoutDateTimeObj.getDate()).padStart(2, '0');
+      const hours = String(payoutDateTimeObj.getHours()).padStart(2, '0');
+      const minutes = String(payoutDateTimeObj.getMinutes()).padStart(2, '0');
+      const seconds = String(payoutDateTimeObj.getSeconds()).padStart(2, '0');
+      
+      // Get timezone offset in format +HH:MM or -HH:MM
+      // getTimezoneOffset() returns offset in minutes, negative for timezones ahead of UTC
+      // For Philippines (UTC+8), it returns -480, so we need to flip the sign
+      const offset = payoutDateTimeObj.getTimezoneOffset();
+      const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+      const offsetMinutes = String(Math.abs(offset) % 60).padStart(2, '0');
+      const offsetSign = offset <= 0 ? '+' : '-'; // Flip sign: negative offset means ahead of UTC (positive in ISO format)
+      
+      // Format as YYYY-MM-DDTHH:mm:ss+HH:MM (with timezone offset)
+      // This ensures the backend interprets it correctly in the local timezone
+      // For Philippines (UTC+8), this will be like: 2025-11-20T18:07:00+08:00
+      const payoutDateTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offsetSign}${offsetHours}:${offsetMinutes}`;
       
       const programUpdateData = {
         name: program.name || '',
