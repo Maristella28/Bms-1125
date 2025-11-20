@@ -4983,10 +4983,27 @@ const ResidentsRecords = () => {
                       />
                     </div>
                     {/* Work & Education */}
-                    {["educational_attainment", "classified_sector", "occupation_type", "salary_income", "business_info", "business_type", "business_location", "voting_location", "voters_id_number", "year_vaccinated", "other_vaccine"].map((field) => (
+                    {["educational_attainment", "classified_sector", "occupation_type", "salary_income", "business_info", "business_type", "business_location", "voting_location", "voters_id_number", "year_vaccinated", "other_vaccine"].map((field) => {
+                      // Map field names to proper labels
+                      const fieldLabels = {
+                        voting_location: 'Precinct No.',
+                        voters_id_number: "Voter's ID Number",
+                        educational_attainment: 'Educational Attainment',
+                        classified_sector: 'Classified Sector',
+                        occupation_type: 'Occupation Type',
+                        salary_income: 'Salary/Income',
+                        business_info: 'Business Info',
+                        business_type: 'Business Type',
+                        business_location: 'Business Location',
+                        year_vaccinated: 'Year Vaccinated',
+                        other_vaccine: 'Other Vaccine'
+                      };
+                      const label = fieldLabels[field] || field.replaceAll("_", " ");
+                      
+                      return (
                       <div key={field}>
                         <label className="block text-sm font-medium text-green-700 mb-1 capitalize">
-                          {field.replaceAll("_", " ")}
+                          {label}
                         </label>
                         <input
                           type="text"
@@ -4994,10 +5011,10 @@ const ResidentsRecords = () => {
                           value={editData[field] || ""}
                           onChange={handleInputChange}
                           className="w-full border border-green-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 bg-white shadow-sm text-green-900 hover:shadow-md focus:shadow-lg"
-                          placeholder={field.replaceAll("_", " ")}
+                          placeholder={field === 'voting_location' ? 'e.g. 001A, 002B' : label}
                         />
                       </div>
-                    ))}
+                    )})}
                     {/* Boolean Fields */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>

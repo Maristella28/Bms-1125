@@ -1294,7 +1294,7 @@ const ReadOnlyView = ({ form, setIsEditing, onEditClick }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <InfoCard icon={<BadgeCheck className="w-5 h-5" />} label="Voter Status" value={form.voter_status || '—'} />
             <InfoCard icon={<BadgeCheck className="w-5 h-5" />} label="Voter's ID" value={form.voters_id_number || '—'} />
-            <InfoCard icon={<MapPin className="w-5 h-5" />} label="Voting Location" value={form.voting_location || '—'} />
+            <InfoCard icon={<MapPin className="w-5 h-5" />} label="Precinct No." value={form.voting_location || '—'} />
           </div>
         )}
       </div>
@@ -1487,7 +1487,7 @@ const EditableForm = ({ form, handleChange, handleSubmit, setIsEditing, submitti
     years_in_barangay: 'Years in Barangay',
     voter_status: 'Voter Status',
     voters_id_number: 'Voter\'s ID Number',
-    voting_location: 'Voting Location',
+    voting_location: 'Precinct No.',
     classified_sector: 'Classified Sector',
     educational_attainment: 'Educational Attainment',
     occupation_type: 'Occupation Type',
@@ -2507,14 +2507,14 @@ const EditableForm = ({ form, handleChange, handleSubmit, setIsEditing, submitti
 
         <div className="space-y-2">
           <label className={`text-sm font-semibold ${isVoterInfoDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
-            Voting Location
+            Precinct No.
             {!isVoterInfoDisabled && isFieldRequired('voting_location') && <span className="text-red-500 ml-1">*</span>}
           </label>
           <input
             name="voting_location"
             value={form.voting_location}
             onChange={handleChange}
-            placeholder="e.g. Barangay Hall, Zone 3"
+            placeholder="e.g. 001A, 002B"
             disabled={isVoterInfoDisabled}
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 transition-all duration-200 shadow-sm hover:shadow-md ${
               isVoterInfoDisabled 
