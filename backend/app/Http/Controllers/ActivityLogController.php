@@ -9,7 +9,7 @@ use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\QueryException;
 use Carbon\Carbon;
 
 class ActivityLogController extends Controller
@@ -308,8 +308,7 @@ class ActivityLogController extends Controller
             $page = $request->get('page', 1);
             $perPage = $request->get('per_page', 20);
 
-            // Check if for_review column exists
-            $hasForReviewColumn = Schema::hasColumn('residents', 'for_review');
+            // We'll check for_review column existence when accessing it, not upfront
 
             // Get all user IDs with recent activity (login or profile updates)
             $activeUserIds = [];
@@ -376,7 +375,7 @@ class ActivityLogController extends Controller
                             'user_id' => $resident->user_id,
                             'last_activity_date' => $lastActivityDate->toDateTimeString(),
                             'days_inactive' => $daysInactive,
-                            'for_review' => $hasForReviewColumn && isset($resident->for_review) ? (bool)$resident->for_review : false,
+                            'for_review' => isset($resident->for_review) ? (bool)$resident->for_review : false,
                             'user' => $resident->user ? [
                                 'id' => $resident->user->id,
                                 'name' => $resident->user->name ?? '',
@@ -508,29 +507,31 @@ class ActivityLogController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
 
-            // Check if column exists before querying
-            if (!Schema::hasColumn('residents', 'for_review')) {
-                \Log::warning('for_review column does not exist in residents table');
-                return response()->json([
-                    'flagged_count' => 0,
-                ]);
-            }
-
+            // Try the query directly, catch any database errors
             $count = Resident::where('for_review', true)->count();
 
             return response()->json([
                 'flagged_count' => $count,
             ]);
+        } catch (QueryException $queryError) {
+            // If column doesn't exist or other DB error, return 0
+            \Log::warning('Query failed for flagged residents count', [
+                'error' => $queryError->getMessage(),
+                'sql_state' => method_exists($queryError, 'getSqlState') ? $queryError->getSqlState() : 'unknown'
+            ]);
+            return response()->json([
+                'flagged_count' => 0,
+            ]);
         } catch (\Exception $e) {
+            // Catch any other exceptions
             \Log::error('Error fetching flagged residents count: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
             return response()->json([
-                'message' => 'Error fetching flagged residents count',
-                'error' => $e->getMessage()
-            ], 500);
+                'flagged_count' => 0,
+            ]);
         }
     }
 }
