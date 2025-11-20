@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Beneficiary;
+use App\Models\Resident;
+use App\Models\ResidentNotification;
 use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class BeneficiaryController extends Controller
 {
@@ -720,6 +724,164 @@ class BeneficiaryController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to download receipt: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Send notice to beneficiary (for non-monetary assistance)
+     */
+    public function sendNotice(Request $request, $id)
+    {
+        try {
+            $beneficiary = Beneficiary::with('program')->findOrFail($id);
+            
+            // Validate request
+            $validated = $request->validate([
+                'message' => 'required|string',
+                'program_id' => 'required|exists:programs,id',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+            ]);
+
+            // Store image if provided
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imageName = 'notice_' . $beneficiary->id . '_' . time() . '.' . $image->getClientOriginalExtension();
+                $imagePath = $image->storeAs('notices', $imageName, 'public');
+            }
+
+            // Find resident associated with beneficiary
+            // Try to match by name and email
+            $resident = null;
+            
+            // Strategy 1: Match by email if available
+            if ($beneficiary->email) {
+                $resident = Resident::whereHas('user', function($query) use ($beneficiary) {
+                    $query->where('email', $beneficiary->email);
+                })->first();
+            }
+            
+            // Strategy 2: Match by name if email match fails
+            if (!$resident && $beneficiary->name) {
+                $nameParts = explode(' ', trim($beneficiary->name));
+                if (count($nameParts) >= 2) {
+                    $firstName = $nameParts[0];
+                    $lastName = implode(' ', array_slice($nameParts, 1));
+                    $resident = Resident::where('first_name', 'LIKE', '%' . $firstName . '%')
+                        ->where('last_name', 'LIKE', '%' . $lastName . '%')
+                        ->first();
+                }
+            }
+
+            $emailsSent = 0;
+            $notificationsCreated = 0;
+
+            if ($resident) {
+                // Create in-app notification
+                $notification = ResidentNotification::create([
+                    'resident_id' => $resident->id,
+                    'program_id' => $validated['program_id'],
+                    'type' => 'program_notice',
+                    'title' => 'Notice: ' . ($beneficiary->program->name ?? 'Program Notice'),
+                    'message' => $validated['message'],
+                    'data' => [
+                        'beneficiary_id' => $beneficiary->id,
+                        'beneficiary_name' => $beneficiary->name,
+                        'program_id' => $validated['program_id'],
+                        'program_name' => $beneficiary->program->name ?? 'Program',
+                        'image_path' => $imagePath,
+                        'sent_at' => now()->toISOString()
+                    ],
+                    'is_read' => false
+                ]);
+                $notificationsCreated++;
+
+                // Send email notification
+                if ($resident->email || ($resident->user && $resident->user->email)) {
+                    $email = $resident->email ?? $resident->user->email;
+                    
+                    try {
+                        Mail::send('emails.beneficiary-notice', [
+                            'beneficiaryName' => $beneficiary->name,
+                            'programName' => $beneficiary->program->name ?? 'Program',
+                            'message' => $validated['message'],
+                            'imagePath' => $imagePath ? Storage::url($imagePath) : null,
+                            'programId' => $validated['program_id']
+                        ], function ($mail) use ($email, $beneficiary) {
+                            $mail->to($email)
+                                ->subject('Notice: ' . ($beneficiary->program->name ?? 'Program Notice'));
+                        });
+                        $emailsSent++;
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to send notice email', [
+                            'beneficiary_id' => $beneficiary->id,
+                            'email' => $email,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+            } else {
+                // If no resident found, still try to send email to beneficiary's email
+                if ($beneficiary->email) {
+                    try {
+                        Mail::send('emails.beneficiary-notice', [
+                            'beneficiaryName' => $beneficiary->name,
+                            'programName' => $beneficiary->program->name ?? 'Program',
+                            'message' => $validated['message'],
+                            'imagePath' => $imagePath ? Storage::url($imagePath) : null,
+                            'programId' => $validated['program_id']
+                        ], function ($mail) use ($beneficiary) {
+                            $mail->to($beneficiary->email)
+                                ->subject('Notice: ' . ($beneficiary->program->name ?? 'Program Notice'));
+                        });
+                        $emailsSent++;
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to send notice email to beneficiary', [
+                            'beneficiary_id' => $beneficiary->id,
+                            'email' => $beneficiary->email,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+            }
+
+            // Log activity
+            $user = Auth::user();
+            if ($user) {
+                ActivityLogService::log(
+                    'beneficiary_notice_sent',
+                    $beneficiary,
+                    null,
+                    [
+                        'message' => $validated['message'],
+                        'image_path' => $imagePath,
+                        'emails_sent' => $emailsSent,
+                        'notifications_created' => $notificationsCreated
+                    ],
+                    "Admin {$user->name} sent notice to beneficiary {$beneficiary->name}",
+                    $request
+                );
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notice sent successfully',
+                'emails_sent' => $emailsSent,
+                'notifications_created' => $notificationsCreated,
+                'image_path' => $imagePath
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send notice to beneficiary', [
+                'beneficiary_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send notice: ' . $e->getMessage()
             ], 500);
         }
     }

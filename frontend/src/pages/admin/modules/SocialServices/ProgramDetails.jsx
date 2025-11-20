@@ -114,6 +114,16 @@ const ProgramDetails = () => {
   });
   const [payoutDateLoading, setPayoutDateLoading] = useState(false);
 
+  // Send Notice modal state
+  const [showSendNoticeModal, setShowSendNoticeModal] = useState(false);
+  const [selectedBeneficiaryForNotice, setSelectedBeneficiaryForNotice] = useState(null);
+  const [noticeForm, setNoticeForm] = useState({
+    message: '',
+    image: null,
+    imagePreview: null
+  });
+  const [noticeLoading, setNoticeLoading] = useState(false);
+
   // Form state
   const [form, setForm] = useState({
     name: '',
@@ -1349,23 +1359,110 @@ const ProgramDetails = () => {
     return assistanceType.includes('non-monetary') || assistanceType.includes('nonmonetary');
   };
 
-  // Handle send notice action for non-monetary assistance
-  const handleSendNotice = async (beneficiary) => {
+  // Handle opening send notice modal
+  const handleOpenSendNoticeModal = (beneficiary) => {
+    setSelectedBeneficiaryForNotice(beneficiary);
+    setNoticeForm({
+      message: `Dear ${beneficiary.name || 'Beneficiary'},\n\nThis is to inform you about your non-monetary assistance program. Please check your notifications for more details.\n\nThank you.`,
+      image: null,
+      imagePreview: null
+    });
+    setShowSendNoticeModal(true);
+  };
+
+  // Handle image selection for notice
+  const handleNoticeImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setToast({
+          type: 'error',
+          message: 'Please select a valid image file'
+        });
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setToast({
+          type: 'error',
+          message: 'Image size must be less than 5MB'
+        });
+        return;
+      }
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNoticeForm(prev => ({
+          ...prev,
+          image: file,
+          imagePreview: reader.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle removing image
+  const handleRemoveImage = () => {
+    setNoticeForm(prev => ({
+      ...prev,
+      image: null,
+      imagePreview: null
+    }));
+  };
+
+  // Handle sending notice
+  const handleSendNotice = async () => {
+    if (!selectedBeneficiaryForNotice) return;
+
+    if (!noticeForm.message.trim()) {
+      setToast({
+        type: 'error',
+        message: 'Please enter a message for the notice'
+      });
+      return;
+    }
+
+    setNoticeLoading(true);
     try {
       // Ensure CSRF token is set
       await fetch('/sanctum/csrf-cookie', { credentials: 'include' });
 
-      console.log('Sending notice to beneficiary:', beneficiary.id);
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('message', noticeForm.message);
+      formData.append('program_id', id);
+      if (noticeForm.image) {
+        formData.append('image', noticeForm.image);
+      }
 
-      // TODO: Implement the actual API endpoint for sending notices
-      // For now, this is a placeholder that shows a success message
-      // You can replace this with the actual API call when the backend endpoint is ready
-      // const response = await axiosInstance.post(`/admin/beneficiaries/${beneficiary.id}/send-notice`);
+      // Send notice
+      const response = await axiosInstance.post(
+        `/admin/beneficiaries/${selectedBeneficiaryForNotice.id}/send-notice`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
 
       setToast({
         type: 'success',
-        message: `Notice sent successfully to ${beneficiary.name || 'beneficiary'}`
+        message: response.data.message || `Notice sent successfully to ${selectedBeneficiaryForNotice.name || 'beneficiary'}`
       });
+
+      // Close modal and reset form
+      setShowSendNoticeModal(false);
+      setNoticeForm({
+        message: '',
+        image: null,
+        imagePreview: null
+      });
+      setSelectedBeneficiaryForNotice(null);
 
       // Refresh beneficiaries to get updated status if needed
       const updatedBeneficiaries = await fetchBeneficiaries(id);
@@ -1376,6 +1473,8 @@ const ProgramDetails = () => {
         type: 'error',
         message: error.response?.data?.message || 'Failed to send notice'
       });
+    } finally {
+      setNoticeLoading(false);
     }
   };
 
@@ -2722,7 +2821,7 @@ const ProgramDetails = () => {
                           <div className="flex gap-3">
                             <button
                               className="px-4 py-2 rounded-xl text-sm font-semibold transition bg-blue-100 text-blue-700 hover:bg-blue-200"
-                              onClick={() => handleSendNotice(beneficiary)}
+                              onClick={() => handleOpenSendNoticeModal(beneficiary)}
                               title="Send notice to beneficiary"
                             >
                               Send Notice
@@ -4123,6 +4222,152 @@ const ProgramDetails = () => {
                     approvals are moving, but payments need to catch up.
                   </p>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Notice Modal */}
+      {showSendNoticeModal && selectedBeneficiaryForNotice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-3xl shadow-2xl border border-blue-100 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-t-3xl p-6 sticky top-0 z-10">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Send Notice to {selectedBeneficiaryForNotice.name}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowSendNoticeModal(false);
+                    setNoticeForm({ message: '', image: null, imagePreview: null });
+                    setSelectedBeneficiaryForNotice(null);
+                  }}
+                  className="text-white hover:text-red-200 transition-colors duration-200 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6 space-y-6">
+              {/* Info Box */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-sm text-blue-800">
+                    This notice will be sent to the beneficiary via email and in-app notification. You can include an image to provide visual information.
+                  </p>
+                </div>
+              </div>
+
+              {/* Message Field */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Message <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={noticeForm.message}
+                  onChange={(e) => setNoticeForm(prev => ({ ...prev, message: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white shadow-sm resize-none"
+                  rows={6}
+                  placeholder="Enter the notice message..."
+                  required
+                />
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Image (Optional)
+                </label>
+                {noticeForm.imagePreview ? (
+                  <div className="space-y-3">
+                    <div className="relative border-2 border-blue-200 rounded-xl overflow-hidden bg-gray-50">
+                      <img
+                        src={noticeForm.imagePreview}
+                        alt="Preview"
+                        className="w-full h-64 object-contain"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition-colors"
+                        title="Remove image"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Image: {noticeForm.image.name} ({(noticeForm.image.size / 1024).toFixed(2)} KB)
+                    </p>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleNoticeImageChange}
+                      className="hidden"
+                      id="notice-image-upload"
+                    />
+                    <label
+                      htmlFor="notice-image-upload"
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                    >
+                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-sm text-gray-600 font-medium">Click to upload image</span>
+                      <span className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSendNoticeModal(false);
+                    setNoticeForm({ message: '', image: null, imagePreview: null });
+                    setSelectedBeneficiaryForNotice(null);
+                  }}
+                  className="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-all duration-300"
+                  disabled={noticeLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSendNotice}
+                  disabled={noticeLoading || !noticeForm.message.trim()}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-medium transition-all duration-300 transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
+                >
+                  {noticeLoading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                      Send Notice
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
