@@ -767,31 +767,66 @@ class BeneficiaryController extends Controller
 
             $emailsSent = 0;
             $notificationsCreated = 0;
+            $emailRecipients = [];
 
+            // Determine email addresses to send to
+            $emailsToSend = [];
+            
             if ($resident) {
                 // Create in-app notification
-                $notification = ResidentNotification::create([
-                    'resident_id' => $resident->id,
-                    'program_id' => $validated['program_id'],
-                    'type' => 'program_notice',
-                    'title' => 'Notice: ' . ($beneficiary->program->name ?? 'Program Notice'),
-                    'message' => $validated['message'],
-                    'data' => [
-                        'beneficiary_id' => $beneficiary->id,
-                        'beneficiary_name' => $beneficiary->name,
+                try {
+                    $notification = ResidentNotification::create([
+                        'resident_id' => $resident->id,
                         'program_id' => $validated['program_id'],
-                        'program_name' => $beneficiary->program->name ?? 'Program',
-                        'sent_at' => now()->toISOString()
-                    ],
-                    'is_read' => false
-                ]);
-                $notificationsCreated++;
+                        'type' => 'program_notice',
+                        'title' => 'Notice: ' . ($beneficiary->program->name ?? 'Program Notice'),
+                        'message' => $validated['message'],
+                        'data' => [
+                            'beneficiary_id' => $beneficiary->id,
+                            'beneficiary_name' => $beneficiary->name,
+                            'program_id' => $validated['program_id'],
+                            'program_name' => $beneficiary->program->name ?? 'Program',
+                            'sent_at' => now()->toISOString()
+                        ],
+                        'is_read' => false
+                    ]);
+                    $notificationsCreated++;
+                    Log::info('Resident notification created', [
+                        'notification_id' => $notification->id,
+                        'resident_id' => $resident->id,
+                        'beneficiary_id' => $beneficiary->id
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to create resident notification', [
+                        'resident_id' => $resident->id,
+                        'beneficiary_id' => $beneficiary->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
 
-                // Send email notification
-                if ($resident->email || ($resident->user && $resident->user->email)) {
-                    $email = $resident->email ?? $resident->user->email;
-                    
+                // Get email from resident or user
+                if ($resident->email) {
+                    $emailsToSend[] = $resident->email;
+                } elseif ($resident->user && $resident->user->email) {
+                    $emailsToSend[] = $resident->user->email;
+                }
+            }
+            
+            // Also try beneficiary's email if available
+            if ($beneficiary->email && !in_array($beneficiary->email, $emailsToSend)) {
+                $emailsToSend[] = $beneficiary->email;
+            }
+
+            // Send emails to all collected addresses
+            foreach ($emailsToSend as $email) {
+                if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     try {
+                        Log::info('Attempting to send notice email', [
+                            'beneficiary_id' => $beneficiary->id,
+                            'email' => $email,
+                            'program_id' => $validated['program_id']
+                        ]);
+
                         Mail::send('emails.beneficiary-notice', [
                             'beneficiaryName' => $beneficiary->name,
                             'programName' => $beneficiary->program->name ?? 'Program',
@@ -801,37 +836,37 @@ class BeneficiaryController extends Controller
                             $mail->to($email)
                                 ->subject('Notice: ' . ($beneficiary->program->name ?? 'Program Notice'));
                         });
+
                         $emailsSent++;
+                        $emailRecipients[] = $email;
+                        Log::info('Notice email sent successfully', [
+                            'beneficiary_id' => $beneficiary->id,
+                            'email' => $email
+                        ]);
                     } catch (\Exception $e) {
-                        Log::warning('Failed to send notice email', [
+                        Log::error('Failed to send notice email', [
                             'beneficiary_id' => $beneficiary->id,
                             'email' => $email,
-                            'error' => $e->getMessage()
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
                         ]);
                     }
+                } else {
+                    Log::warning('Invalid email address for notice', [
+                        'beneficiary_id' => $beneficiary->id,
+                        'email' => $email
+                    ]);
                 }
-            } else {
-                // If no resident found, still try to send email to beneficiary's email
-                if ($beneficiary->email) {
-                    try {
-                        Mail::send('emails.beneficiary-notice', [
-                            'beneficiaryName' => $beneficiary->name,
-                            'programName' => $beneficiary->program->name ?? 'Program',
-                            'message' => $validated['message'],
-                            'programId' => $validated['program_id']
-                        ], function ($mail) use ($beneficiary) {
-                            $mail->to($beneficiary->email)
-                                ->subject('Notice: ' . ($beneficiary->program->name ?? 'Program Notice'));
-                        });
-                        $emailsSent++;
-                    } catch (\Exception $e) {
-                        Log::warning('Failed to send notice email to beneficiary', [
-                            'beneficiary_id' => $beneficiary->id,
-                            'email' => $beneficiary->email,
-                            'error' => $e->getMessage()
-                        ]);
-                    }
-                }
+            }
+
+            // Log if no emails were found
+            if (empty($emailsToSend)) {
+                Log::warning('No email addresses found for notice', [
+                    'beneficiary_id' => $beneficiary->id,
+                    'beneficiary_email' => $beneficiary->email,
+                    'resident_found' => $resident ? true : false,
+                    'resident_email' => $resident ? ($resident->email ?? ($resident->user->email ?? 'N/A')) : 'N/A'
+                ]);
             }
 
             // Log activity
@@ -855,7 +890,13 @@ class BeneficiaryController extends Controller
                 'success' => true,
                 'message' => 'Notice sent successfully',
                 'emails_sent' => $emailsSent,
-                'notifications_created' => $notificationsCreated
+                'notifications_created' => $notificationsCreated,
+                'email_recipients' => $emailRecipients,
+                'debug' => [
+                    'beneficiary_email' => $beneficiary->email,
+                    'resident_found' => $resident ? true : false,
+                    'emails_attempted' => $emailsToSend
+                ]
             ]);
 
         } catch (\Exception $e) {
