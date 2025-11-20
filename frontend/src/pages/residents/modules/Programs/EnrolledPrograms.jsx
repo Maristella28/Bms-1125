@@ -858,7 +858,8 @@ const EnrolledPrograms = () => {
                 </div>
               </div>
             </div>
-          )}
+            );
+          })()}
         </div>
       </main>
 
