@@ -494,7 +494,7 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
         ? (() => {
             const blotterEndpoint = user?.role === 'admin' ? '/admin/blotter-requests' : '/staff/blotter-requests';
             return axiosInstance.get(blotterEndpoint, {
-          timeout: 15000 // 15 second timeout - increased for slow backend
+          timeout: 30000 // 30 second timeout - increased for slow backend and large datasets
         }).then(response => {
           const blotterRequests = extractArrayFromResponse(response.data, ['blotter_requests']);
           const pendingBlotter = countPendingItems(blotterRequests);
@@ -517,7 +517,7 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
             // For staff, directly use /asset-requests to get all requests (status-counts only returns own requests)
             if (user?.role === 'staff') {
               return axiosInstance.get('/asset-requests', {
-                timeout: 15000,
+                timeout: 30000, // 30 second timeout - increased for slow backend and large datasets
                 params: { per_page: 1000, page: 1 }
               }).then(response => {
                 const assetRequests = extractArrayFromResponse(response.data, ['asset_requests']);
@@ -532,7 +532,7 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
             }
             // For admin, try status-counts first (more efficient)
             return axiosInstance.get('/asset-requests/status-counts', {
-          timeout: 15000 // 15 second timeout - increased for slow backend
+          timeout: 30000 // 30 second timeout - increased for slow backend and large datasets
         }).then(response => {
           const statusCounts = response.data || {};
           const pendingAssets = typeof statusCounts.pending === 'number' ? statusCounts.pending : 0;
@@ -544,7 +544,7 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
           }
           // Fallback: try full list
           return axiosInstance.get('/asset-requests', {
-            timeout: 15000, // Increased timeout for fallback
+            timeout: 30000, // 30 second timeout - increased for slow backend and large datasets
             params: { per_page: 1000, page: 1 }
           }).then(response => {
             const assetRequests = extractArrayFromResponse(response.data, ['asset_requests']);
