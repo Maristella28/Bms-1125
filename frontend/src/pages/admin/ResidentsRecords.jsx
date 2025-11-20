@@ -1190,6 +1190,7 @@ const ResidentsRecords = () => {
   const [infoModal, setInfoModal] = useState({ title: '', message: '', type: 'info' });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [disableReason, setDisableReason] = useState('');
 
   const showInfo = useCallback((message, title = 'Notice', type = 'info') => {
     setInfoModal({ title, message: typeof message === 'string' ? message : JSON.stringify(message), type });
@@ -1200,11 +1201,13 @@ const ResidentsRecords = () => {
 
   const openConfirm = (residentId) => {
     setPendingDeleteId(residentId);
+    setDisableReason(''); // Reset reason when opening modal
     setShowConfirmModal(true);
   };
 
   const closeConfirm = () => {
     setPendingDeleteId(null);
+    setDisableReason(''); // Reset reason when closing modal
     setShowConfirmModal(false);
   };
 
@@ -2315,9 +2318,15 @@ const ResidentsRecords = () => {
 
   const confirmDelete = async () => {
     if (!pendingDeleteId) return closeConfirm();
+    if (!disableReason) {
+      showInfo('Please select a reason for disabling this resident.', 'Validation', 'error');
+      return;
+    }
     try {
-      console.log('Attempting to disable resident with ID:', pendingDeleteId, 'Type:', typeof pendingDeleteId);
-      const response = await axiosInstance.post(`/admin/residents/${pendingDeleteId}/delete`);
+      console.log('Attempting to disable resident with ID:', pendingDeleteId, 'Type:', typeof pendingDeleteId, 'Reason:', disableReason);
+      const response = await axiosInstance.post(`/admin/residents/${pendingDeleteId}/delete`, {
+        reason: disableReason
+      });
       console.log('Disable resident response:', response.data);
       showInfo('Resident disabled successfully.', 'Disabled', 'success');
       fetchResidents();
@@ -4765,6 +4774,27 @@ const ResidentsRecords = () => {
                     </button>
                   </div>
                 </div>
+                
+                {/* Disable Reason Dropdown */}
+                <div className="mt-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Reason for Disabling <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={disableReason}
+                    onChange={(e) => setDisableReason(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-300 bg-white shadow-sm hover:shadow-md focus:shadow-lg"
+                  >
+                    <option value="">-- Select a reason --</option>
+                    <option value="relocated">Relocated</option>
+                    <option value="deceased">Deceased</option>
+                    <option value="pending_issue">Pending Issue</option>
+                  </select>
+                  {!disableReason && (
+                    <p className="mt-1 text-xs text-red-600">Please select a reason to continue</p>
+                  )}
+                </div>
+
                 <div className="mt-6 flex justify-end gap-3">
                   <button 
                     onClick={closeConfirm} 
@@ -4773,8 +4803,13 @@ const ResidentsRecords = () => {
                     Cancel
                   </button>
                   <button 
-                    onClick={confirmDelete} 
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium"
+                    onClick={confirmDelete}
+                    disabled={!disableReason}
+                    className={`px-4 py-2 rounded-xl transition-colors font-medium ${
+                      disableReason
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
                   >
                     Disable
                   </button>
