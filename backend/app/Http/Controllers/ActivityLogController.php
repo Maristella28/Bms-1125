@@ -342,19 +342,14 @@ class ActivityLogController extends Controller
                 ])
                 ->whereNotNull('user_id');
 
-            // Filter out active users (those with recent activity)
+            // Filter out active users (those with recent activity in the past year)
             if (!empty($activeUserIds)) {
                 $inactiveResidentsQuery->whereNotIn('user_id', $activeUserIds);
             }
-
-            // Also include residents with inactive account_status if the column exists
-            // Use Schema to check if column exists before querying
-            if (Schema::hasColumn('residents', 'account_status')) {
-                $inactiveResidentsQuery->where(function($query) {
-                    $query->whereNull('account_status')
-                          ->orWhereIn('account_status', ['inactive', 'suspended', 'permanently_restricted']);
-                });
-            }
+            
+            // Note: We don't filter by account_status here because we want to show
+            // ALL residents with no activity for 1 year, regardless of their account_status.
+            // The account_status is just informational in the response.
 
             // Get total count before pagination
             $total = $inactiveResidentsQuery->count();
