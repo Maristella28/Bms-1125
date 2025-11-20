@@ -231,6 +231,7 @@ const DisabledResidentsTable = ({ showRecentlyDeleted, onRefresh }) => {
               <th className="px-4 py-4 text-left font-semibold text-gray-700 border-r border-gray-200">Gender</th>
               <th className="px-4 py-4 text-left font-semibold text-gray-700 border-r border-gray-200">Voter</th>
               <th className="px-4 py-4 text-left font-semibold text-gray-700 border-r border-gray-200">Voter's ID</th>
+              <th className="px-4 py-4 text-left font-semibold text-gray-700 border-r border-gray-200">Reason for Disabled</th>
               <th className="px-4 py-4 text-left font-semibold text-gray-700">Actions</th>
             </tr>
           </thead>
@@ -238,7 +239,7 @@ const DisabledResidentsTable = ({ showRecentlyDeleted, onRefresh }) => {
           <tbody className="divide-y divide-gray-100">
             {recentlyDeletedLoading ? (
               <tr>
-                <td colSpan="10" className="px-6 py-12 text-center">
+                <td colSpan="11" className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
                     <p className="text-gray-500 font-medium">Loading recently disabled residents...</p>
@@ -247,7 +248,7 @@ const DisabledResidentsTable = ({ showRecentlyDeleted, onRefresh }) => {
               </tr>
             ) : recentlyDeletedResidents.length === 0 ? (
               <tr>
-                <td colSpan="10" className="px-6 py-12 text-center">
+                <td colSpan="11" className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center gap-3">
                     <UserIcon className="w-12 h-12 text-gray-300" />
                     <p className="text-gray-500 font-medium">No recently disabled residents found</p>
@@ -296,6 +297,24 @@ const DisabledResidentsTable = ({ showRecentlyDeleted, onRefresh }) => {
                     />
                   </td>
                   <td className="px-4 py-4 text-gray-700">{r.voters_id_number || "N/A"}</td>
+                  <td className="px-4 py-4">
+                    {r.disable_reason ? (
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                        r.disable_reason === 'relocated' 
+                          ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                          : r.disable_reason === 'deceased'
+                          ? 'bg-gray-100 text-gray-800 border border-gray-200'
+                          : 'bg-amber-100 text-amber-800 border border-amber-200'
+                      }`}>
+                        {r.disable_reason === 'relocated' ? 'Relocated' : 
+                         r.disable_reason === 'deceased' ? 'Deceased' : 
+                         r.disable_reason === 'pending_issue' ? 'Pending Issue' : 
+                         r.disable_reason}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs italic">N/A</span>
+                    )}
+                  </td>
                   <td className="px-4 py-4">
                     <button
                       onClick={() => handleRestore(r)}

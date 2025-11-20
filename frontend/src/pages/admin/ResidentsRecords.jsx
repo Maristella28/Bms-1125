@@ -4327,6 +4327,7 @@ const ResidentsRecords = () => {
                     <th className="px-6 py-4 text-left font-bold text-slate-700 border-r border-slate-200 text-sm uppercase tracking-wider hidden md:table-cell min-w-[100px]">Age</th>
                     <th className="px-6 py-4 text-left font-bold text-slate-700 border-r border-slate-200 text-sm uppercase tracking-wider hidden lg:table-cell min-w-[140px]">Civil Status</th>
                     <th className="px-6 py-4 text-left font-bold text-slate-700 border-r border-slate-200 text-sm uppercase tracking-wider hidden md:table-cell min-w-[120px]">Gender</th>
+                    <th className="px-6 py-4 text-left font-bold text-slate-700 border-r border-slate-200 text-sm uppercase tracking-wider hidden lg:table-cell min-w-[140px]">Precinct No.</th>
                     <th className="px-6 py-4 text-left font-bold text-slate-700 border-r border-slate-200 text-sm uppercase tracking-wider hidden lg:table-cell min-w-[180px]">Last Modified</th>
                     <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[200px]">Actions</th>
                   </tr>
@@ -4335,7 +4336,7 @@ const ResidentsRecords = () => {
                 <tbody className="divide-y divide-slate-200/50">
                   {loading ? (
                     <tr className="hover:bg-slate-50/50 transition-colors duration-200">
-                      <td colSpan="8" className="px-6 py-16 text-center">
+                      <td colSpan="9" className="px-6 py-16 text-center">
                         <div className="flex flex-col items-center gap-4">
                           <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin shadow-lg"></div>
                           <p className="text-slate-600 font-semibold text-lg">Loading residents...</p>
@@ -4345,7 +4346,7 @@ const ResidentsRecords = () => {
                     </tr>
                   ) : getFilteredResidents().length === 0 ? (
                     <tr className="hover:bg-slate-50/50 transition-colors duration-200">
-                      <td colSpan="8" className="px-6 py-16 text-center">
+                      <td colSpan="9" className="px-6 py-16 text-center">
                         <div className="flex flex-col items-center gap-4">
                           <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center shadow-lg">
                             <UserIcon className="w-8 h-8 text-slate-400" />
@@ -4396,6 +4397,11 @@ const ResidentsRecords = () => {
                             />
                           </td>
                           <td className="px-6 py-4 hidden lg:table-cell">
+                            <span className="text-gray-700 text-sm font-medium">
+                              {r.voting_location || 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 hidden lg:table-cell">
                             <div className="flex items-center gap-1 text-xs text-gray-600">
                               <ClockIcon className="w-3 h-3" />
                               <span>{r.last_modified ? new Date(r.last_modified).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>
@@ -4421,7 +4427,7 @@ const ResidentsRecords = () => {
                           user?.module_permissions?.residentsRecords_main_records_view === '1'
                         ) && (
                           <tr className="bg-gradient-to-r from-green-50 to-emerald-50">
-                            <td colSpan="8" className="px-8 py-8">
+                            <td colSpan="9" className="px-8 py-8">
                               {detailLoading ? (
                                 <div className="flex justify-center py-8">
                                   <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
