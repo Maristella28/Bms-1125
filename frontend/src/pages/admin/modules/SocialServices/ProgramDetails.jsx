@@ -118,9 +118,7 @@ const ProgramDetails = () => {
   const [showSendNoticeModal, setShowSendNoticeModal] = useState(false);
   const [selectedBeneficiaryForNotice, setSelectedBeneficiaryForNotice] = useState(null);
   const [noticeForm, setNoticeForm] = useState({
-    message: '',
-    image: null,
-    imagePreview: null
+    message: ''
   });
   const [noticeLoading, setNoticeLoading] = useState(false);
 
@@ -1363,55 +1361,9 @@ const ProgramDetails = () => {
   const handleOpenSendNoticeModal = (beneficiary) => {
     setSelectedBeneficiaryForNotice(beneficiary);
     setNoticeForm({
-      message: `Dear ${beneficiary.name || 'Beneficiary'},\n\nThis is to inform you about your non-monetary assistance program. Please check your notifications for more details.\n\nThank you.`,
-      image: null,
-      imagePreview: null
+      message: `Dear ${beneficiary.name || 'Beneficiary'},\n\nThis is to inform you about your non-monetary assistance program. Please check your notifications for more details.\n\nThank you.`
     });
     setShowSendNoticeModal(true);
-  };
-
-  // Handle image selection for notice
-  const handleNoticeImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setToast({
-          type: 'error',
-          message: 'Please select a valid image file'
-        });
-        return;
-      }
-      
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setToast({
-          type: 'error',
-          message: 'Image size must be less than 5MB'
-        });
-        return;
-      }
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNoticeForm(prev => ({
-          ...prev,
-          image: file,
-          imagePreview: reader.result
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Handle removing image
-  const handleRemoveImage = () => {
-    setNoticeForm(prev => ({
-      ...prev,
-      image: null,
-      imagePreview: null
-    }));
   };
 
   // Handle sending notice
@@ -1432,22 +1384,15 @@ const ProgramDetails = () => {
       await fetch('/sanctum/csrf-cookie', { credentials: 'include' });
 
       // Prepare form data
-      const formData = new FormData();
-      formData.append('message', noticeForm.message);
-      formData.append('program_id', id);
-      if (noticeForm.image) {
-        formData.append('image', noticeForm.image);
-      }
+      const data = {
+        message: noticeForm.message,
+        program_id: id
+      };
 
       // Send notice
       const response = await axiosInstance.post(
         `/admin/beneficiaries/${selectedBeneficiaryForNotice.id}/send-notice`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
+        data
       );
 
       setToast({
@@ -1458,9 +1403,7 @@ const ProgramDetails = () => {
       // Close modal and reset form
       setShowSendNoticeModal(false);
       setNoticeForm({
-        message: '',
-        image: null,
-        imagePreview: null
+        message: ''
       });
       setSelectedBeneficiaryForNotice(null);
 
@@ -4243,7 +4186,7 @@ const ProgramDetails = () => {
                 <button
                   onClick={() => {
                     setShowSendNoticeModal(false);
-                    setNoticeForm({ message: '', image: null, imagePreview: null });
+                    setNoticeForm({ message: '' });
                     setSelectedBeneficiaryForNotice(null);
                   }}
                   className="text-white hover:text-red-200 transition-colors duration-200 text-2xl font-bold"
@@ -4260,7 +4203,7 @@ const ProgramDetails = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <p className="text-sm text-blue-800">
-                    This notice will be sent to the beneficiary via email and in-app notification. You can include an image to provide visual information.
+                    This notice will be sent to the beneficiary via email and in-app notification.
                   </p>
                 </div>
               </div>
@@ -4337,7 +4280,7 @@ const ProgramDetails = () => {
                   type="button"
                   onClick={() => {
                     setShowSendNoticeModal(false);
-                    setNoticeForm({ message: '', image: null, imagePreview: null });
+                    setNoticeForm({ message: '' });
                     setSelectedBeneficiaryForNotice(null);
                   }}
                   className="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-all duration-300"

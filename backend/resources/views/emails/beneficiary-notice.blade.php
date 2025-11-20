@@ -86,12 +86,6 @@
                 <p style="white-space: pre-wrap;">{{ $message }}</p>
             </div>
             
-            @if($imagePath)
-            <div class="image-container">
-                <img src="{{ $imagePath }}" alt="Notice Image" />
-            </div>
-            @endif
-            
             <p style="margin-top: 20px;">
                 Please check your notifications in the system for more details.
             </p>

@@ -740,16 +740,7 @@ class BeneficiaryController extends Controller
             $validated = $request->validate([
                 'message' => 'required|string',
                 'program_id' => 'required|exists:programs,id',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
             ]);
-
-            // Store image if provided
-            $imagePath = null;
-            if ($request->hasFile('image')) {
-                $image = $request->file('image');
-                $imageName = 'notice_' . $beneficiary->id . '_' . time() . '.' . $image->getClientOriginalExtension();
-                $imagePath = $image->storeAs('notices', $imageName, 'public');
-            }
 
             // Find resident associated with beneficiary
             // Try to match by name and email
@@ -790,7 +781,6 @@ class BeneficiaryController extends Controller
                         'beneficiary_name' => $beneficiary->name,
                         'program_id' => $validated['program_id'],
                         'program_name' => $beneficiary->program->name ?? 'Program',
-                        'image_path' => $imagePath,
                         'sent_at' => now()->toISOString()
                     ],
                     'is_read' => false
@@ -806,7 +796,6 @@ class BeneficiaryController extends Controller
                             'beneficiaryName' => $beneficiary->name,
                             'programName' => $beneficiary->program->name ?? 'Program',
                             'message' => $validated['message'],
-                            'imagePath' => $imagePath ? Storage::url($imagePath) : null,
                             'programId' => $validated['program_id']
                         ], function ($mail) use ($email, $beneficiary) {
                             $mail->to($email)
@@ -829,7 +818,6 @@ class BeneficiaryController extends Controller
                             'beneficiaryName' => $beneficiary->name,
                             'programName' => $beneficiary->program->name ?? 'Program',
                             'message' => $validated['message'],
-                            'imagePath' => $imagePath ? Storage::url($imagePath) : null,
                             'programId' => $validated['program_id']
                         ], function ($mail) use ($beneficiary) {
                             $mail->to($beneficiary->email)
@@ -855,7 +843,6 @@ class BeneficiaryController extends Controller
                     null,
                     [
                         'message' => $validated['message'],
-                        'image_path' => $imagePath,
                         'emails_sent' => $emailsSent,
                         'notifications_created' => $notificationsCreated
                     ],
@@ -868,8 +855,7 @@ class BeneficiaryController extends Controller
                 'success' => true,
                 'message' => 'Notice sent successfully',
                 'emails_sent' => $emailsSent,
-                'notifications_created' => $notificationsCreated,
-                'image_path' => $imagePath
+                'notifications_created' => $notificationsCreated
             ]);
 
         } catch (\Exception $e) {
