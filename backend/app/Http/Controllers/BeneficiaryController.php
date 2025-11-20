@@ -948,8 +948,8 @@ class BeneficiaryController extends Controller
                             'beneficiary_id' => $beneficiary->id,
                             'email' => $email
                         ]);
-                    } catch (\Illuminate\Mail\MessageException $e) {
-                        Log::error('Mail message exception when sending notice email', [
+                    } catch (\Swift_TransportException $e) {
+                        Log::error('Mail transport exception when sending notice email', [
                             'beneficiary_id' => $beneficiary->id,
                             'email' => $email,
                             'error' => $e->getMessage(),
