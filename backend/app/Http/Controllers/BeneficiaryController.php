@@ -748,7 +748,7 @@ class BeneficiaryController extends Controller
             
             // Strategy 1: Match by email if available
             if ($beneficiary->email) {
-                $resident = Resident::whereHas('user', function($query) use ($beneficiary) {
+                $resident = Resident::with('user')->whereHas('user', function($query) use ($beneficiary) {
                     $query->where('email', $beneficiary->email);
                 })->first();
             }
@@ -759,11 +759,19 @@ class BeneficiaryController extends Controller
                 if (count($nameParts) >= 2) {
                     $firstName = $nameParts[0];
                     $lastName = implode(' ', array_slice($nameParts, 1));
-                    $resident = Resident::where('first_name', 'LIKE', '%' . $firstName . '%')
+                    $resident = Resident::with('user')->where('first_name', 'LIKE', '%' . $firstName . '%')
                         ->where('last_name', 'LIKE', '%' . $lastName . '%')
                         ->first();
                 }
             }
+            
+            Log::info('Resident matching result', [
+                'beneficiary_id' => $beneficiary->id,
+                'beneficiary_email' => $beneficiary->email,
+                'beneficiary_name' => $beneficiary->name,
+                'resident_found' => $resident ? true : false,
+                'resident_id' => $resident ? $resident->id : null
+            ]);
 
             $emailsSent = 0;
             $notificationsCreated = 0;
@@ -771,6 +779,15 @@ class BeneficiaryController extends Controller
 
             // Determine email addresses to send to
             $emailsToSend = [];
+            
+            // Priority 1: Always try beneficiary's email first (most direct)
+            if ($beneficiary->email && filter_var($beneficiary->email, FILTER_VALIDATE_EMAIL)) {
+                $emailsToSend[] = $beneficiary->email;
+                Log::info('Added beneficiary email to send list', [
+                    'beneficiary_id' => $beneficiary->id,
+                    'email' => $beneficiary->email
+                ]);
+            }
             
             if ($resident) {
                 // Create in-app notification
@@ -804,37 +821,59 @@ class BeneficiaryController extends Controller
                     ]);
                 }
 
-                // Get email from resident or user
-                if ($resident->email) {
-                    $emailsToSend[] = $resident->email;
-                } elseif ($resident->user && $resident->user->email) {
-                    $emailsToSend[] = $resident->user->email;
+                // Get email from resident or user (add if not already in list)
+                $residentEmail = null;
+                if ($resident->email && filter_var($resident->email, FILTER_VALIDATE_EMAIL)) {
+                    $residentEmail = $resident->email;
+                } elseif ($resident->user && $resident->user->email && filter_var($resident->user->email, FILTER_VALIDATE_EMAIL)) {
+                    $residentEmail = $resident->user->email;
                 }
-            }
-            
-            // Also try beneficiary's email if available
-            if ($beneficiary->email && !in_array($beneficiary->email, $emailsToSend)) {
-                $emailsToSend[] = $beneficiary->email;
+                
+                if ($residentEmail && !in_array($residentEmail, $emailsToSend)) {
+                    $emailsToSend[] = $residentEmail;
+                    Log::info('Added resident email to send list', [
+                        'resident_id' => $resident->id,
+                        'email' => $residentEmail
+                    ]);
+                }
             }
 
             // Send emails to all collected addresses
+            if (empty($emailsToSend)) {
+                Log::warning('No email addresses found for notice', [
+                    'beneficiary_id' => $beneficiary->id,
+                    'beneficiary_email' => $beneficiary->email,
+                    'resident_found' => $resident ? true : false,
+                    'resident_email' => $resident ? ($resident->email ?? ($resident->user->email ?? 'N/A')) : 'N/A'
+                ]);
+            } else {
+                Log::info('Preparing to send notice emails', [
+                    'beneficiary_id' => $beneficiary->id,
+                    'email_count' => count($emailsToSend),
+                    'emails' => $emailsToSend
+                ]);
+            }
+
             foreach ($emailsToSend as $email) {
-                if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     try {
                         Log::info('Attempting to send notice email', [
                             'beneficiary_id' => $beneficiary->id,
                             'email' => $email,
-                            'program_id' => $validated['program_id']
+                            'program_id' => $validated['program_id'],
+                            'program_name' => $beneficiary->program->name ?? 'Program'
                         ]);
 
+                        // Use the same pattern as ProgramController for consistency
                         Mail::send('emails.beneficiary-notice', [
                             'beneficiaryName' => $beneficiary->name,
                             'programName' => $beneficiary->program->name ?? 'Program',
                             'message' => $validated['message'],
                             'programId' => $validated['program_id']
-                        ], function ($mail) use ($email, $beneficiary) {
-                            $mail->to($email)
-                                ->subject('Notice: ' . ($beneficiary->program->name ?? 'Program Notice'));
+                        ], function ($message) use ($email, $beneficiary) {
+                            $programName = $beneficiary->program->name ?? 'Program Notice';
+                            $message->to($email)
+                                    ->subject("Notice: {$programName}");
                         });
 
                         $emailsSent++;
@@ -843,30 +882,28 @@ class BeneficiaryController extends Controller
                             'beneficiary_id' => $beneficiary->id,
                             'email' => $email
                         ]);
-                    } catch (\Exception $e) {
-                        Log::error('Failed to send notice email', [
+                    } catch (\Illuminate\Mail\MessageException $e) {
+                        Log::error('Mail message exception when sending notice email', [
                             'beneficiary_id' => $beneficiary->id,
                             'email' => $email,
                             'error' => $e->getMessage(),
                             'trace' => $e->getTraceAsString()
                         ]);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send notice email', [
+                            'beneficiary_id' => $beneficiary->id,
+                            'email' => $email,
+                            'error' => $e->getMessage(),
+                            'error_class' => get_class($e),
+                            'trace' => $e->getTraceAsString()
+                        ]);
                     }
                 } else {
-                    Log::warning('Invalid email address for notice', [
+                    Log::warning('Invalid or missing email address for notice', [
                         'beneficiary_id' => $beneficiary->id,
-                        'email' => $email
+                        'email' => $email ?: 'NULL'
                     ]);
                 }
-            }
-
-            // Log if no emails were found
-            if (empty($emailsToSend)) {
-                Log::warning('No email addresses found for notice', [
-                    'beneficiary_id' => $beneficiary->id,
-                    'beneficiary_email' => $beneficiary->email,
-                    'resident_found' => $resident ? true : false,
-                    'resident_email' => $resident ? ($resident->email ?? ($resident->user->email ?? 'N/A')) : 'N/A'
-                ]);
             }
 
             // Log activity
