@@ -610,12 +610,13 @@ class BeneficiaryController extends Controller
             $beneficiary->proof_comment = $request->comment;
         }
 
-        // For non-monetary programs, mark as received/completed without receipt validation
-        // For monetary programs, mark receipt as validated
+        // For non-monetary programs, mark as received but NOT completed (admin/staff must verify)
+        // For monetary programs, mark receipt as validated and completed
         if ($isNonMonetary) {
             $beneficiary->receipt_number_validated = true;
-            $beneficiary->status = 'Completed';
-            $message = 'Program marked as received successfully!';
+            // Don't set status to 'Completed' - admin/staff must verify first
+            // Keep current status (usually 'Approved')
+            $message = 'Program marked as received successfully! Waiting for admin verification.';
         } else {
             $beneficiary->receipt_number_validated = true;
             $beneficiary->status = 'Completed';
@@ -641,8 +642,16 @@ class BeneficiaryController extends Controller
      */
     private function determineTrackingStage($beneficiary, $submission, $program)
     {
-        // If receipt is validated or status is Completed, all stages are completed (Stage 4)
-        if ($beneficiary->receipt_number_validated || $beneficiary->status === 'Completed') {
+        // Check if this is a non-monetary program
+        $isNonMonetary = $program && (
+            $program->assistance_type === 'Non-monetary Assistance' ||
+            $program->assistance_type === 'Non-monetary' ||
+            $beneficiary->assistance_type === 'Non-monetary Assistance' ||
+            $beneficiary->assistance_type === 'Non-monetary'
+        );
+        
+        // Stage 4: Only when status is Completed
+        if ($beneficiary->status === 'Completed') {
             return 4;
         }
         
@@ -662,6 +671,23 @@ class BeneficiaryController extends Controller
                         'error' => $e->getMessage()
                     ]);
                 }
+            }
+            
+            // For non-monetary programs:
+            // - Stage 3: If payout date reached OR receipt_number_validated (waiting for admin verification)
+            // - Stage 4: Only when status is Completed (handled above)
+            if ($isNonMonetary) {
+                if ($payoutDateReached || $beneficiary->receipt_number_validated) {
+                    return 3; // Stage 3: Can mark as received or waiting for admin verification
+                }
+                // Stage 2: Waiting for payout
+                return 2;
+            }
+            
+            // For monetary programs:
+            // - Stage 4: When receipt_number_validated is true
+            if ($beneficiary->receipt_number_validated) {
+                return 4;
             }
             
             // Stage 3: If payout date has been reached OR beneficiary is marked as paid
@@ -788,6 +814,86 @@ class BeneficiaryController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to download receipt: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Mark beneficiary as completed (admin/staff only - for non-monetary assistance verification)
+     */
+    public function markComplete(Request $request, $id)
+    {
+        try {
+            $beneficiary = Beneficiary::with('program')->findOrFail($id);
+            
+            // Check if this is a non-monetary program
+            $isNonMonetary = $beneficiary->program && (
+                $beneficiary->program->assistance_type === 'Non-monetary Assistance' ||
+                $beneficiary->program->assistance_type === 'Non-monetary' ||
+                $beneficiary->assistance_type === 'Non-monetary Assistance' ||
+                $beneficiary->assistance_type === 'Non-monetary'
+            );
+            
+            if (!$isNonMonetary) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This action is only available for non-monetary assistance programs'
+                ], 400);
+            }
+            
+            // Check if beneficiary has marked as received
+            if (!$beneficiary->receipt_number_validated) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Beneficiary must mark as received before completion can be verified'
+                ], 400);
+            }
+            
+            // Check if already completed
+            if ($beneficiary->status === 'Completed') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Beneficiary is already marked as completed'
+                ], 400);
+            }
+            
+            // Mark as completed
+            $beneficiary->status = 'Completed';
+            $beneficiary->save();
+            
+            // Log activity
+            $user = Auth::user();
+            if ($user) {
+                ActivityLogService::log(
+                    'beneficiary_completed',
+                    $beneficiary,
+                    null,
+                    [
+                        'previous_status' => 'Approved',
+                        'new_status' => 'Completed',
+                        'program_type' => 'Non-monetary Assistance'
+                    ],
+                    "Admin {$user->name} verified and completed beneficiary {$beneficiary->name} for non-monetary program",
+                    $request
+                );
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Beneficiary marked as completed successfully',
+                'beneficiary' => $beneficiary->fresh()
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to mark beneficiary as completed', [
+                'beneficiary_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark beneficiary as completed: ' . $e->getMessage()
             ], 500);
         }
     }

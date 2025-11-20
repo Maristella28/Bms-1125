@@ -1421,6 +1421,42 @@ const ProgramDetails = () => {
     }
   };
 
+  // Handle complete action (for non-monetary assistance)
+  const handleComplete = async (beneficiary) => {
+    if (!window.confirm(`Are you sure you want to verify and complete the program for ${beneficiary.name}?`)) {
+      return;
+    }
+
+    try {
+      // Ensure CSRF token is set
+      await fetch('/sanctum/csrf-cookie', { credentials: 'include' });
+
+      console.log('Marking beneficiary as completed:', beneficiary.id);
+
+      // Call the complete endpoint
+      const response = await axiosInstance.post(`/admin/beneficiaries/${beneficiary.id}/mark-complete`);
+
+      console.log('Complete response:', response?.data);
+
+      // Refresh beneficiaries to get updated status
+      const updatedBeneficiaries = await fetchBeneficiaries(id);
+      setBeneficiaries(updatedBeneficiaries);
+
+      setToast({
+        type: 'success',
+        message: response.data.message || 'Beneficiary marked as completed successfully!'
+      });
+    } catch (err) {
+      console.error('Failed to mark beneficiary as completed:', err);
+      setToast({
+        type: 'error',
+        message: err.response?.data?.message || 'Failed to mark beneficiary as completed'
+      });
+    } finally {
+      setTimeout(() => setToast(null), 3000);
+    }
+  };
+
   // Handle paid action
   const handlePaid = async (beneficiary) => {
     try {
@@ -2868,8 +2904,8 @@ const ProgramDetails = () => {
                       <div className="flex flex-col gap-3">
                         {/* Conditional Actions based on Assistance Type */}
                         {isNonMonetaryAssistance() ? (
-                          /* Non-Monetary Assistance: Show Send Notice */
-                          <div className="flex gap-3">
+                          /* Non-Monetary Assistance: Show Send Notice and Complete (if received) */
+                          <div className="flex flex-col gap-2">
                             <button
                               className="px-4 py-2 rounded-xl text-sm font-semibold transition bg-blue-100 text-blue-700 hover:bg-blue-200"
                               onClick={() => handleOpenSendNoticeModal(beneficiary)}
@@ -2877,6 +2913,26 @@ const ProgramDetails = () => {
                             >
                               Send Notice
                             </button>
+                            {/* Show Complete button only if beneficiary has marked as received but not yet completed */}
+                            {beneficiary.receipt_number_validated && beneficiary.status !== 'Completed' && (
+                              <button
+                                className="px-4 py-2 rounded-xl text-sm font-semibold transition bg-green-100 text-green-700 hover:bg-green-200"
+                                onClick={() => handleComplete(beneficiary)}
+                                title="Verify and complete the program for this beneficiary"
+                              >
+                                Complete
+                              </button>
+                            )}
+                            {/* Show completed status if already completed */}
+                            {beneficiary.status === 'Completed' && (
+                              <button
+                                className="px-4 py-2 rounded-xl text-sm font-semibold transition bg-emerald-100 text-emerald-700 cursor-default"
+                                disabled
+                                title="Program completed"
+                              >
+                                ✓ Completed
+                              </button>
+                            )}
                           </div>
                         ) : (
                           /* Monetary Assistance: Show Mark Paid / Receipt actions */

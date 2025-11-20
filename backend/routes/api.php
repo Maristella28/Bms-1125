@@ -217,6 +217,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'staff', 'sanitize'])->group
     Route::get('/beneficiaries/{id}/download-receipt', [App\Http\Controllers\BeneficiaryController::class, 'downloadReceipt']);
     Route::post('/beneficiaries/{id}/toggle-visibility', [App\Http\Controllers\BeneficiaryController::class, 'toggleVisibility']);
     Route::post('/beneficiaries/{id}/mark-paid', [App\Http\Controllers\BeneficiaryController::class, 'markPaid']);
+    Route::post('/beneficiaries/{id}/mark-complete', [App\Http\Controllers\BeneficiaryController::class, 'markComplete']);
     Route::post('/beneficiaries/{id}/send-notice', [App\Http\Controllers\BeneficiaryController::class, 'sendNotice']);
     Route::apiResource('beneficiaries', App\Http\Controllers\BeneficiaryController::class);
     
