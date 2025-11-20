@@ -423,7 +423,7 @@ class BeneficiaryController extends Controller
                                 : ($beneficiary->is_paid 
                                     ? 'Enter your receipt number to complete the program (You have been marked as paid)'
                                     : 'Enter your receipt number to complete the program'),
-                            'completed' => $trackingStage >= 3,
+                            'completed' => $trackingStage > 3, // Only completed when stage 4 (receipt validated)
                             'active' => $trackingStage === 3
                         ],
                         [
