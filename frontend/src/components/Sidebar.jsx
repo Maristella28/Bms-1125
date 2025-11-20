@@ -400,7 +400,7 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
         ? (() => {
             const documentEndpoint = user?.role === 'admin' ? '/admin/document-requests' : '/staff/document-requests';
             return axiosInstance.get(documentEndpoint, {
-          timeout: 15000 // 15 second timeout - increased for slow backend
+          timeout: 30000 // 30 second timeout - increased for slow backend and large datasets
         }).then(response => {
           const requests = extractArrayFromResponse(response.data, ['document_requests']);
           // Count ONLY pending requests - these are new requests needing approval

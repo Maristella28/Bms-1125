@@ -19,7 +19,7 @@ use Maatwebsite\Excel\Facades\Excel;
 class DocumentRequestController extends Controller
 {
     // Admin: Fetch all document requests with resident data
-    public function index()
+    public function index(Request $request)
     {
         // Optimized query - load user first, then manually join residents
         try {
@@ -44,7 +44,6 @@ class DocumentRequestController extends Controller
             $requests->each(function ($request) use ($residents) {
                 $request->resident = $residents->get($request->user_id);
             });
-            
             
             return response()->json($requests);
         } catch (\Exception $e) {
