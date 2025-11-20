@@ -23,6 +23,11 @@ class ProgramController extends Controller
 
     public function store(Request $request)
     {
+        // Convert empty string to null for payout_date before validation
+        if ($request->has('payout_date') && $request->input('payout_date') === '') {
+            $request->merge(['payout_date' => null]);
+        }
+        
         $data = $request->validate([
             'name' => 'required|string',
             'description' => 'nullable|string',
@@ -35,6 +40,12 @@ class ProgramController extends Controller
             'status' => 'required|string',
             'payout_date' => 'nullable|date|after:now',
         ]);
+        
+        // Ensure payout_date is null if empty (double check)
+        if (isset($data['payout_date']) && ($data['payout_date'] === '' || $data['payout_date'] === null)) {
+            $data['payout_date'] = null;
+        }
+        
         $program = Program::create($data);
         
         // Log program creation activity
@@ -109,6 +120,12 @@ class ProgramController extends Controller
     public function update(Request $request, $id)
     {
         $program = Program::findOrFail($id);
+        
+        // Convert empty string to null for payout_date before validation
+        if ($request->has('payout_date') && $request->input('payout_date') === '') {
+            $request->merge(['payout_date' => null]);
+        }
+        
         $data = $request->validate([
             'name' => 'sometimes|required|string',
             'description' => 'nullable|string',
@@ -121,6 +138,12 @@ class ProgramController extends Controller
             'status' => 'required|string',
             'payout_date' => 'nullable|date|after:now',
         ]);
+        
+        // Ensure payout_date is null if empty (double check)
+        if (isset($data['payout_date']) && ($data['payout_date'] === '' || $data['payout_date'] === null)) {
+            $data['payout_date'] = null;
+        }
+        
         \Log::info('Program update data:', $data);
         $oldValues = $program->getOriginal();
         $program->update($data);
