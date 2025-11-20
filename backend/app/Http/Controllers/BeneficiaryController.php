@@ -359,7 +359,6 @@ class BeneficiaryController extends Controller
                     'proof_of_payout_url' => $beneficiary->proof_of_payout ? asset('storage/' . $beneficiary->proof_of_payout) : null,
                     'receipt_number' => $beneficiary->receipt_number,
                     'receipt_number_validated' => $beneficiary->receipt_number_validated,
-                    'program_rating' => $beneficiary->program_rating,
                     'is_paid' => $beneficiary->is_paid,
                     'proof_comment' => $beneficiary->proof_comment
                 ],
@@ -404,10 +403,26 @@ class BeneficiaryController extends Controller
                         ],
                         [
                             'stage' => 3,
-                            'title' => 'Complete Program - Enter Receipt Number',
-                            'description' => $beneficiary->is_paid 
-                                ? 'Enter your receipt number to complete the program (You have been marked as paid)'
-                                : 'Enter your receipt number to complete the program',
+                            'title' => ($beneficiary->program && (
+                                $beneficiary->program->assistance_type === 'Non-monetary Assistance' ||
+                                $beneficiary->program->assistance_type === 'Non-monetary' ||
+                                $beneficiary->assistance_type === 'Non-monetary Assistance' ||
+                                $beneficiary->assistance_type === 'Non-monetary'
+                            )) 
+                                ? 'Complete Program - Mark as Received'
+                                : 'Complete Program - Enter Receipt Number',
+                            'description' => ($beneficiary->program && (
+                                $beneficiary->program->assistance_type === 'Non-monetary Assistance' ||
+                                $beneficiary->program->assistance_type === 'Non-monetary' ||
+                                $beneficiary->assistance_type === 'Non-monetary Assistance' ||
+                                $beneficiary->assistance_type === 'Non-monetary'
+                            ))
+                                ? ($beneficiary->is_paid 
+                                    ? 'Confirm receipt of the non-monetary assistance to complete the program (You have been marked as paid)'
+                                    : 'Confirm receipt of the non-monetary assistance to complete the program')
+                                : ($beneficiary->is_paid 
+                                    ? 'Enter your receipt number to complete the program (You have been marked as paid)'
+                                    : 'Enter your receipt number to complete the program'),
                             'completed' => $trackingStage >= 3,
                             'active' => $trackingStage === 3
                         ],
@@ -543,12 +558,13 @@ class BeneficiaryController extends Controller
 
         // Validate the request based on program type
         if ($isNonMonetary) {
+            // For non-monetary programs, receipt_number is not required
             $request->validate([
-                'rating' => 'required|integer|min:1|max:5',
                 'proof_file' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:10240', // 10MB max
                 'comment' => 'nullable|string|max:1000'
             ]);
         } else {
+            // For monetary programs, receipt_number is required
             $request->validate([
                 'receipt_number' => 'required|string|max:255',
                 'proof_file' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:10240', // 10MB max
@@ -589,35 +605,33 @@ class BeneficiaryController extends Controller
             $beneficiary->proof_of_payout = $path;
         }
 
-        // Update the beneficiary record
-        $beneficiary->receipt_number_validated = true;
-        $beneficiary->status = 'Completed';
-        if ($request->comment) {
+        // Update comment if provided
+        if ($request->has('comment')) {
             $beneficiary->proof_comment = $request->comment;
         }
-        
-        // Store rating for non-monetary programs
-        if ($isNonMonetary && $request->has('rating')) {
-            // Store rating in proof_comment or create a new field if needed
-            // For now, we'll store it in a JSON format in proof_comment if comment exists
-            // Otherwise, we can add a rating field to the database later
-            $beneficiary->program_rating = $request->rating;
+
+        // For non-monetary programs, mark as received/completed without receipt validation
+        // For monetary programs, mark receipt as validated
+        if ($isNonMonetary) {
+            $beneficiary->receipt_number_validated = true;
+            $beneficiary->status = 'Completed';
+            $message = 'Program marked as received successfully!';
+        } else {
+            $beneficiary->receipt_number_validated = true;
+            $beneficiary->status = 'Completed';
+            $message = 'Receipt number validated successfully! Program completed.';
         }
         
         $beneficiary->save();
-
-        $message = $isNonMonetary 
-            ? 'Thank you for your feedback! Program completed successfully.'
-            : 'Receipt number validated successfully! Program completed.';
 
         return response()->json([
             'success' => true,
             'message' => $message,
             'data' => [
-                'receipt_number' => $beneficiary->receipt_number ?? null,
-                'rating' => $isNonMonetary ? $request->rating : null,
+                'receipt_number' => $isNonMonetary ? null : $beneficiary->receipt_number,
                 'proof_url' => $proofUrl,
-                'status' => 'Completed'
+                'status' => 'Completed',
+                'is_non_monetary' => $isNonMonetary
             ]
         ]);
     }

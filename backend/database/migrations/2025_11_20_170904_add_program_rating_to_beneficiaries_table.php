@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('beneficiaries', function (Blueprint $table) {
-            $table->integer('program_rating')->nullable()->after('receipt_number_validated');
+            //
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('beneficiaries', function (Blueprint $table) {
-            $table->dropColumn('program_rating');
+            //
         });
     }
 };

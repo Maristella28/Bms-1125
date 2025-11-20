@@ -32,7 +32,6 @@ class Beneficiary extends Model
         'receipt_path',
         'receipt_number',
         'receipt_number_validated',
-        'program_rating',
     ];
 
     protected $casts = [
