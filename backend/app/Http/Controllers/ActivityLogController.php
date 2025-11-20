@@ -9,6 +9,7 @@ use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class ActivityLogController extends Controller
@@ -307,16 +308,30 @@ class ActivityLogController extends Controller
             $page = $request->get('page', 1);
             $perPage = $request->get('per_page', 20);
 
+            // Check if for_review column exists
+            $hasForReviewColumn = Schema::hasColumn('residents', 'for_review');
+
             // Get all user IDs with recent activity (login or profile updates)
-            $activeUserIds = ActivityLog::whereIn('action', ['login', 'Resident.Profile.Updated', 'Resident.Updated'])
-                ->where('created_at', '>=', $oneYearAgo)
-                ->whereNotNull('user_id')
-                ->distinct()
-                ->pluck('user_id')
-                ->toArray();
+            $activeUserIds = [];
+            try {
+                $activeUserIds = ActivityLog::whereIn('action', ['login', 'Resident.Profile.Updated', 'Resident.Updated'])
+                    ->where('created_at', '>=', $oneYearAgo)
+                    ->whereNotNull('user_id')
+                    ->distinct()
+                    ->pluck('user_id')
+                    ->toArray();
+            } catch (\Exception $e) {
+                \Log::warning('Error fetching active user IDs, continuing with empty array', [
+                    'error' => $e->getMessage()
+                ]);
+                // Continue with empty array - all residents will be considered inactive
+            }
 
             // Get residents with user accounts that are NOT in the active list
-            $inactiveResidentsQuery = Resident::with(['user'])
+            // Use optional relationship loading to avoid errors if relationship fails
+            $inactiveResidentsQuery = Resident::with(['user' => function($query) {
+                    $query->select('id', 'name', 'email');
+                }])
                 ->whereNotNull('user_id');
             
             // Only apply whereNotIn if there are active users, otherwise all residents are inactive
@@ -331,39 +346,52 @@ class ActivityLogController extends Controller
             $inactiveResidents = $inactiveResidentsQuery->skip(($page - 1) * $perPage)
                 ->take($perPage)
                 ->get()
-                ->map(function($resident) use ($oneYearAgo) {
-                    $lastActivity = ActivityLog::where('user_id', $resident->user_id)
-                        ->whereIn('action', ['login', 'Resident.Profile.Updated', 'Resident.Updated'])
-                        ->orderBy('created_at', 'desc')
-                        ->first();
+                ->map(function($resident) use ($oneYearAgo, $hasForReviewColumn) {
+                    if (!$resident->user_id) {
+                        return null;
+                    }
 
-                    $lastActivityDate = $lastActivity 
-                        ? Carbon::parse($lastActivity->created_at)
-                        : Carbon::parse($resident->created_at);
+                    try {
+                        $lastActivity = ActivityLog::where('user_id', $resident->user_id)
+                            ->whereIn('action', ['login', 'Resident.Profile.Updated', 'Resident.Updated'])
+                            ->orderBy('created_at', 'desc')
+                            ->first();
 
-                    $daysInactive = $lastActivityDate->diffInDays(Carbon::now());
+                        $lastActivityDate = $lastActivity 
+                            ? Carbon::parse($lastActivity->created_at)
+                            : ($resident->created_at ? Carbon::parse($resident->created_at) : Carbon::now());
 
-                    return [
-                        'id' => $resident->id,
-                        'resident_id' => $resident->resident_id,
-                        'first_name' => $resident->first_name,
-                        'middle_name' => $resident->middle_name,
-                        'last_name' => $resident->last_name,
-                        'name_suffix' => $resident->name_suffix,
-                        'email' => $resident->email,
-                        'contact_number' => $resident->contact_number,
-                        'full_name' => trim("{$resident->first_name} {$resident->middle_name} {$resident->last_name} {$resident->name_suffix}"),
-                        'user_id' => $resident->user_id,
-                        'last_activity_date' => $lastActivityDate->toDateTimeString(),
-                        'days_inactive' => $daysInactive,
-                        'for_review' => $resident->for_review ?? false,
-                        'user' => $resident->user ? [
-                            'id' => $resident->user->id,
-                            'name' => $resident->user->name,
-                            'email' => $resident->user->email,
-                        ] : null,
-                    ];
+                        $daysInactive = $lastActivityDate->diffInDays(Carbon::now());
+
+                        return [
+                            'id' => $resident->id,
+                            'resident_id' => $resident->resident_id ?? '',
+                            'first_name' => $resident->first_name ?? '',
+                            'middle_name' => $resident->middle_name ?? '',
+                            'last_name' => $resident->last_name ?? '',
+                            'name_suffix' => $resident->name_suffix ?? '',
+                            'email' => $resident->email ?? '',
+                            'contact_number' => $resident->contact_number ?? '',
+                            'full_name' => trim(($resident->first_name ?? '') . ' ' . ($resident->middle_name ?? '') . ' ' . ($resident->last_name ?? '') . ' ' . ($resident->name_suffix ?? '')),
+                            'user_id' => $resident->user_id,
+                            'last_activity_date' => $lastActivityDate->toDateTimeString(),
+                            'days_inactive' => $daysInactive,
+                            'for_review' => $hasForReviewColumn && isset($resident->for_review) ? (bool)$resident->for_review : false,
+                            'user' => $resident->user ? [
+                                'id' => $resident->user->id,
+                                'name' => $resident->user->name ?? '',
+                                'email' => $resident->user->email ?? '',
+                            ] : null,
+                        ];
+                    } catch (\Exception $e) {
+                        \Log::warning('Error processing resident in inactiveResidents', [
+                            'resident_id' => $resident->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        return null;
+                    }
                 })
+                ->filter() // Remove null entries
                 ->sortByDesc('days_inactive')
                 ->values();
 
@@ -376,11 +404,19 @@ class ActivityLogController extends Controller
             ]);
         } catch (\Exception $e) {
             \Log::error('Error fetching inactive residents: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'request' => $request->all()
             ]);
             return response()->json([
                 'message' => 'Error fetching inactive residents',
-                'error' => $e->getMessage()
+                'error' => config('app.debug') ? $e->getMessage() : 'An error occurred while fetching inactive residents',
+                'inactive_residents' => [],
+                'total' => 0,
+                'page' => 1,
+                'per_page' => 20,
+                'last_page' => 1
             ], 500);
         }
     }
@@ -472,6 +508,14 @@ class ActivityLogController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
 
+            // Check if column exists before querying
+            if (!Schema::hasColumn('residents', 'for_review')) {
+                \Log::warning('for_review column does not exist in residents table');
+                return response()->json([
+                    'flagged_count' => 0,
+                ]);
+            }
+
             $count = Resident::where('for_review', true)->count();
 
             return response()->json([
@@ -479,7 +523,9 @@ class ActivityLogController extends Controller
             ]);
         } catch (\Exception $e) {
             \Log::error('Error fetching flagged residents count: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
             return response()->json([
                 'message' => 'Error fetching flagged residents count',
