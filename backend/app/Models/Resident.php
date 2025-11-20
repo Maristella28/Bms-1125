@@ -124,6 +124,7 @@ class Resident extends Model
         'residency_verification_image',
         'last_modified',
         'for_review',
+        'disable_reason',
         // Account status and penalty tracking
         'account_status',
         'no_show_count',

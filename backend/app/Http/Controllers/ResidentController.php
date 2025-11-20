@@ -808,6 +808,22 @@ class ResidentController extends Controller
                 ], 400);
             }
             
+            // Get disable reason from request
+            $disableReason = $request->input('reason', null);
+            
+            // Validate disable reason if provided
+            if ($disableReason && !in_array($disableReason, ['relocated', 'deceased', 'pending_issue'])) {
+                return response()->json([
+                    'message' => 'Invalid disable reason. Must be one of: relocated, deceased, pending_issue',
+                ], 422);
+            }
+            
+            // Store disable reason before soft delete
+            if ($disableReason) {
+                $resident->disable_reason = $disableReason;
+                $resident->save();
+            }
+            
             // Perform soft delete first (faster operation)
             $resident->delete();
             
@@ -899,6 +915,7 @@ class ResidentController extends Controller
                         'voters_id_number' => $resident->voters_id_number ?? $resident->voters_id ?? null,
                         'avatar' => $resident->profile->avatar ?? $resident->current_photo ?? null,
                         'current_photo' => $resident->current_photo,
+                        'disable_reason' => $resident->disable_reason,
                         'deleted_at' => $resident->deleted_at,
                         'created_at' => $resident->created_at,
                         'updated_at' => $resident->updated_at,
