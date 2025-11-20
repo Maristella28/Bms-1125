@@ -105,6 +105,75 @@ const EnrolledPrograms = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, beneficiaries.length, trackingModal.isOpen]);
 
+  // Auto-refresh tracking data when payout date is reached
+  useEffect(() => {
+    if (!trackingModal.isOpen || !trackingModal.data) return;
+
+    const payoutDate = trackingModal.data.tracking?.payout_date;
+    if (!payoutDate) return;
+
+    const beneficiaryId = trackingModal.data.beneficiary?.id;
+    if (!beneficiaryId) return;
+
+    // Check if payout date has been reached
+    const checkPayoutDate = () => {
+      try {
+        const payout = new Date(payoutDate);
+        const now = new Date();
+        
+        // If payout date has been reached and we're still on stage 2, refresh tracking data
+        if (now >= payout) {
+          const currentStage = trackingModal.data.tracking?.current_stage;
+          if (currentStage === 2) {
+            axiosInstance.get(`/my-benefits/${beneficiaryId}/track`)
+              .then(response => {
+                setTrackingModal(prev => ({
+                  ...prev,
+                  data: response.data.data
+                }));
+              })
+              .catch(err => {
+                console.error('Error refreshing tracking data:', err);
+              });
+          }
+        }
+      } catch (e) {
+        console.error('Error checking payout date:', e);
+      }
+    };
+
+    // Check immediately
+    checkPayoutDate();
+
+    // Set up interval to check every minute if payout date hasn't been reached yet
+    try {
+      const payout = new Date(payoutDate);
+      const now = new Date();
+      
+      if (now < payout) {
+        // Calculate time until payout date
+        const timeUntilPayout = payout.getTime() - now.getTime();
+        
+        // Set up interval to check every minute
+        const interval = setInterval(checkPayoutDate, 60000); // Check every minute
+        
+        // Also set a timeout to check exactly when payout date is reached
+        const timeout = setTimeout(() => {
+          checkPayoutDate();
+          clearInterval(interval);
+        }, timeUntilPayout);
+
+        return () => {
+          clearInterval(interval);
+          clearTimeout(timeout);
+        };
+      }
+    } catch (e) {
+      console.error('Error setting up payout date check:', e);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackingModal.isOpen, trackingModal.data?.tracking?.payout_date, trackingModal.data?.tracking?.current_stage]);
+
   const handleBackToBenefits = () => {
     navigate('/residents/myBenefits');
   };

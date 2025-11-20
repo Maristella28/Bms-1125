@@ -648,13 +648,31 @@ class BeneficiaryController extends Controller
         
         // Stage 1: Application approved
         if ($beneficiary->status === 'Approved' && $submission && $submission->status === 'approved') {
-            // Stage 2: Waiting for payout (if not marked as paid yet)
+            // Check if payout date has been reached
+            $payoutDateReached = false;
+            if ($program && $program->payout_date) {
+                try {
+                    $payoutDate = \Carbon\Carbon::parse($program->payout_date);
+                    $now = \Carbon\Carbon::now();
+                    // Check if current time is greater than or equal to payout date/time
+                    $payoutDateReached = $now->greaterThanOrEqualTo($payoutDate);
+                } catch (\Exception $e) {
+                    \Log::warning('Error parsing payout date', [
+                        'payout_date' => $program->payout_date,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            // Stage 3: If payout date has been reached OR beneficiary is marked as paid
+            // This allows residents to complete the program once payout date arrives
+            if ($payoutDateReached || ($beneficiary->is_paid && !$beneficiary->receipt_number_validated)) {
+                return 3;
+            }
+            
+            // Stage 2: Waiting for payout (if not marked as paid yet and payout date not reached)
             if (!$beneficiary->is_paid) {
                 return 2;
-            }
-            // Stage 3: Marked as paid, need to validate receipt number
-            else if ($beneficiary->is_paid && !$beneficiary->receipt_number_validated) {
-                return 3;
             }
         }
         
