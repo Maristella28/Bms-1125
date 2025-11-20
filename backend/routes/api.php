@@ -240,17 +240,19 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'staff', 'sanitize'])->group
     // ============================================
     // 📊 LOGS MODULE (activityLogs)
     // ============================================
+    // IMPORTANT: Specific routes must come BEFORE the generic {id} route to avoid route conflicts
     Route::get('/activity-logs', [ActivityLogController::class, 'index']);
-    Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show']);
     Route::get('/activity-logs/statistics/summary', [ActivityLogController::class, 'statistics']);
     Route::get('/activity-logs/filters/options', [ActivityLogController::class, 'filters']);
     Route::get('/activity-logs/security/alerts', [ActivityLogController::class, 'securityAlerts']);
     Route::get('/activity-logs/audit/summary', [ActivityLogController::class, 'auditSummary']);
-    Route::post('/activity-logs/export', [ActivityLogController::class, 'export']);
-    Route::delete('/activity-logs/cleanup', [ActivityLogController::class, 'cleanup']);
     Route::get('/activity-logs/inactive-residents', [ActivityLogController::class, 'inactiveResidents']);
-    Route::post('/activity-logs/flag-inactive-residents', [ActivityLogController::class, 'flagInactiveResidents']);
     Route::get('/activity-logs/flagged-residents-count', [ActivityLogController::class, 'flaggedResidentsCount']);
+    Route::post('/activity-logs/export', [ActivityLogController::class, 'export']);
+    Route::post('/activity-logs/flag-inactive-residents', [ActivityLogController::class, 'flagInactiveResidents']);
+    Route::delete('/activity-logs/cleanup', [ActivityLogController::class, 'cleanup']);
+    // Generic {id} route must come LAST to avoid catching specific routes
+    Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show']);
     
     // ============================================
     // 📝 FEEDBACK MODULE (shared)
