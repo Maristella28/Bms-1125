@@ -25,7 +25,7 @@
             background-color: #ffffff;
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
         }
         .header {
             background: linear-gradient(135deg, #059669 0%, #10b981 100%);
@@ -33,6 +33,29 @@
             padding: 48px 40px 40px;
             text-align: center;
             position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
         }
         .header-content {
             position: relative;
@@ -72,10 +95,12 @@
         }
         .greeting {
             font-size: 18px;
-            margin-bottom: 28px;
+            margin-bottom: 32px;
             color: #111827;
             font-weight: 600;
             line-height: 1.6;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f3f4f6;
         }
         .greeting strong {
             color: #059669;
@@ -133,9 +158,9 @@
         .info-card-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
+            gap: 14px;
+            margin-bottom: 22px;
+            padding-bottom: 18px;
             border-bottom: 2px solid #e5e7eb;
         }
         .info-card-icon {
@@ -167,8 +192,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 0;
+            padding: 16px 0;
             border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s ease;
+        }
+        .info-row:hover {
+            background-color: rgba(5, 150, 105, 0.02);
+            margin: 0 -8px;
+            padding-left: 8px;
+            padding-right: 8px;
+            border-radius: 6px;
         }
         .info-row:last-child {
             border-bottom: none;
@@ -191,12 +224,23 @@
         .ticket-section {
             background: linear-gradient(135deg, #059669 0%, #10b981 100%);
             color: white;
-            padding: 36px 32px;
-            border-radius: 12px;
+            padding: 40px 36px;
+            border-radius: 16px;
             text-align: center;
             margin: 32px 0;
-            box-shadow: 0 4px 16px rgba(5, 150, 105, 0.25);
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3), 0 2px 8px rgba(5, 150, 105, 0.2);
             position: relative;
+            overflow: hidden;
+        }
+        .ticket-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            pointer-events: none;
         }
         .ticket-label {
             font-size: 12px;
@@ -211,12 +255,15 @@
             font-weight: 800;
             letter-spacing: 3px;
             font-family: 'Courier New', 'Monaco', monospace;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 18px 32px;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px 36px;
+            border-radius: 10px;
             display: inline-block;
-            border: 2px solid rgba(255, 255, 255, 0.25);
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 1;
         }
         .warning-box {
             background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
@@ -230,8 +277,8 @@
         .warning-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 10px;
+            gap: 14px;
+            margin-bottom: 12px;
         }
         .warning-icon {
             width: 44px;
@@ -302,12 +349,13 @@
             transform: translateY(-1px);
         }
         .contact-info {
-            background: #f9fafb;
+            background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
             border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 24px;
+            border-radius: 14px;
+            padding: 28px;
             margin: 32px 0;
             text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
         .contact-info p {
             margin: 0;
@@ -320,9 +368,9 @@
             font-weight: 700;
         }
         .signature {
-            margin-top: 32px;
-            padding-top: 28px;
-            border-top: 1px solid #e5e7eb;
+            margin-top: 36px;
+            padding-top: 32px;
+            border-top: 2px solid #e5e7eb;
         }
         .signature p {
             margin: 6px 0;
@@ -595,7 +643,11 @@
             
             <!-- Success Banner -->
             <div class="success-banner">
-                <div class="success-icon">✓</div>
+                <div class="success-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
                 <div class="success-banner-content">
                     <p>Congratulations! Your blotter request has been reviewed and approved by our administration team.</p>
                 </div>
@@ -604,7 +656,11 @@
             <!-- Request Information Card -->
             <div class="info-card">
                 <div class="info-card-header">
-                    <div class="info-card-icon">ℹ</div>
+                    <div class="info-card-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
                     <h3>Request Details</h3>
                 </div>
                 <div class="info-row">
@@ -630,7 +686,11 @@
             <!-- Important Reminder -->
             <div class="warning-box">
                 <div class="warning-header">
-                    <div class="warning-icon">!</div>
+                    <div class="warning-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
                     <strong>Important Reminder</strong>
                 </div>
                 <p>Please keep your ticket number safe and secure. You will need this number when following up on your blotter request, contacting the barangay office, or for any future reference regarding this matter.</p>
