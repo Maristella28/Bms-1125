@@ -27,78 +27,40 @@ import { usePermissions } from '../../../../hooks/usePermissions';
 const RoleCard = ({ role, count, activeCount, icon, color, gradient, onClick, loading }) => (
   <div 
     onClick={onClick}
-    className="relative overflow-hidden rounded-3xl p-8 shadow-2xl border-2 border-white/50 hover:border-white/80 transition-all duration-700 cursor-pointer transform hover:scale-[1.02] hover:-translate-y-2 bg-gradient-to-br from-white via-white to-gray-50/50 group backdrop-blur-sm"
-    style={{
-      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-    }}
+    className={`relative overflow-hidden rounded-2xl p-6 shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-105 bg-white group`}
   >
-    {/* Animated background gradient overlay */}
-    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-15 transition-opacity duration-700`}></div>
-    
-    {/* Animated shimmer effect */}
-    <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+    {/* Animated background gradient */}
+    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
     
     {/* Content */}
     <div className="relative z-10">
-      <div className="flex items-center justify-between mb-6">
-        <div className={`w-20 h-20 rounded-3xl flex items-center justify-center ${color} shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 relative overflow-hidden`}>
-          <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-20`}></div>
-          <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
-            {icon}
-          </div>
+      <div className="flex items-center justify-between mb-4">
+        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${color} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+          {icon}
         </div>
-        <div className={`px-4 py-2 rounded-full text-sm font-bold shadow-lg backdrop-blur-sm ${color.replace('bg-', 'bg-').replace('-600', '-100')} ${color.replace('bg-', 'text-').replace('-100', '-700')} border-2 border-white/50 group-hover:scale-110 transition-transform duration-300`}>
-          {loading ? (
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-current rounded-full animate-pulse"></div>
-              <div className="w-2 h-2 bg-current rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-2 h-2 bg-current rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-            </div>
-          ) : (
-            `${count} Total`
-          )}
+        <div className={`px-3 py-1 rounded-full text-xs font-bold ${color.replace('bg-', 'bg-').replace('-600', '-100')} ${color.replace('bg-', 'text-').replace('-100', '-700')}`}>
+          {loading ? '...' : count} Total
         </div>
       </div>
       
-      <h3 className="text-3xl font-extrabold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-3 group-hover:scale-105 transition-transform duration-300">
-        {role}
-      </h3>
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-          <CheckIcon className="w-5 h-5 text-white" />
-        </div>
-        <div className="flex flex-col">
-          <span className="text-sm text-gray-500 font-medium">Active Users</span>
-          <span className="text-xl font-bold text-gray-900">
-            {loading ? (
-              <span className="inline-flex items-center gap-1">
-                <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></span>
-              </span>
-            ) : (
-              activeCount
-            )}
-          </span>
-        </div>
+      <h3 className="text-2xl font-bold text-gray-900 mb-2">{role}</h3>
+      <div className="flex items-center gap-2 mb-4">
+        <CheckIcon className="w-5 h-5 text-green-600" />
+        <span className="text-sm text-gray-600">
+          <span className="font-semibold text-gray-900">{loading ? '...' : activeCount}</span> Active
+        </span>
       </div>
       
-      <div className="mt-6 pt-6 border-t-2 border-gradient-to-r from-gray-200 to-transparent">
+      <div className="mt-4 pt-4 border-t border-gray-200">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider group-hover:text-gray-600 transition-colors">
-            Click to manage
-          </span>
-          <div className="flex items-center gap-2">
-            <ArrowPathIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-700 group-hover:rotate-180 transition-all duration-500" />
-          </div>
+          <span className="text-xs text-gray-500">Click to manage</span>
+          <ArrowPathIcon className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
         </div>
       </div>
     </div>
     
     {/* Decorative elements */}
-    <div className={`absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br ${gradient} rounded-full opacity-10 group-hover:opacity-20 group-hover:scale-150 transition-all duration-700 blur-2xl`}></div>
-    <div className={`absolute -bottom-8 -left-8 w-24 h-24 bg-gradient-to-tr ${gradient} rounded-full opacity-5 group-hover:opacity-15 transition-opacity duration-700 blur-xl`}></div>
-    
-    {/* Corner accent */}
-    <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-white/50 to-transparent rounded-bl-full"></div>
+    <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${gradient} rounded-full transform translate-x-8 -translate-y-8 opacity-5 group-hover:opacity-10 transition-opacity duration-500`}></div>
   </div>
 );
 
@@ -858,47 +820,30 @@ const UserManagement = () => {
           {!selectedRole ? (
             <>
               {/* Enhanced Header */}
-              <div className="text-center space-y-6 relative">
-                {/* Animated background decoration */}
-                <div className="absolute inset-0 -z-10 overflow-hidden">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-to-br from-green-400/20 to-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
+              <div className="text-center space-y-4">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full shadow-xl mb-4">
+                  <UserGroupIcon className="w-10 h-10 text-white" />
                 </div>
-                
-                <div className="relative inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 rounded-3xl shadow-2xl mb-6 transform hover:scale-110 hover:rotate-6 transition-all duration-500 group">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-3xl"></div>
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-transparent via-white/10 to-transparent animate-shimmer"></div>
-                  <UserGroupIcon className="w-12 h-12 text-white relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                  <div className="absolute -inset-1 bg-gradient-to-br from-green-400 to-emerald-600 rounded-3xl blur opacity-50 group-hover:opacity-75 transition-opacity duration-300"></div>
-                </div>
-                
-                <div className="space-y-3">
-                  <h1 className="text-6xl font-extrabold bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent tracking-tight animate-gradient">
-                    User Management System
-                  </h1>
-                  <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-emerald-500 mx-auto rounded-full"></div>
-                </div>
-                
-                <p className="text-gray-600 text-xl max-w-3xl mx-auto leading-relaxed font-medium">
-                  Comprehensive management system for all user accounts, roles, permissions, and access control with{' '}
-                  <span className="text-emerald-600 font-semibold">real-time monitoring</span>.
+                <h1 className="text-5xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent tracking-tight">
+                  User Management System
+                </h1>
+                <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
+                  Comprehensive management system for all user accounts, roles, permissions, and access control with real-time monitoring.
                 </p>
                 
                 {/* Help System Buttons */}
-                <div className="flex flex-wrap justify-center gap-4 mt-10">
-                  <button className="group relative inline-flex items-center gap-3 px-6 py-3 text-sm font-semibold text-green-700 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl hover:border-green-300 hover:from-green-100 hover:to-emerald-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-green-400/10 to-emerald-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <BookOpenIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                    <span className="relative z-10">Help Guide</span>
+                <div className="flex flex-wrap justify-center gap-4 mt-8">
+                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:text-green-700 transition-colors duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
+                    <BookOpenIcon className="w-4 h-4" />
+                    Help Guide
                   </button>
-                  <button className="group relative inline-flex items-center gap-3 px-6 py-3 text-sm font-semibold text-blue-700 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl hover:border-blue-300 hover:from-blue-100 hover:to-cyan-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-cyan-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <PlayIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                    <span className="relative z-10">Quick Start</span>
+                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
+                    <PlayIcon className="w-4 h-4" />
+                    Quick Start
                   </button>
-                  <button className="group relative inline-flex items-center gap-3 px-6 py-3 text-sm font-semibold text-purple-700 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl hover:border-purple-300 hover:from-purple-100 hover:to-pink-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-pink-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <QuestionMarkCircleIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                    <span className="relative z-10">FAQ</span>
+                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 hover:text-purple-700 transition-colors duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
+                    <QuestionMarkCircleIcon className="w-4 h-4" />
+                    FAQ
                   </button>
                 </div>
               </div>
@@ -938,82 +883,26 @@ const UserManagement = () => {
               </div>
 
               {/* Summary Statistics */}
-              <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-white/50 p-8 overflow-hidden">
-                {/* Background decoration */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-green-200/20 to-emerald-200/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-blue-200/20 to-cyan-200/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
-                
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                      <UserGroupIcon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-extrabold text-gray-900">System Overview</h3>
-                      <p className="text-sm text-gray-500">Real-time user statistics</p>
-                    </div>
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <UserGroupIcon className="w-6 h-6 text-green-600" />
+                  System Overview
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl p-4 border border-red-200">
+                    <p className="text-sm text-red-600 font-medium mb-1">Total Administrators</p>
+                    <p className="text-3xl font-bold text-red-700">{counts.admin.total}</p>
+                    <p className="text-xs text-red-500 mt-1">{counts.admin.active} active</p>
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="group relative bg-gradient-to-br from-red-50 via-pink-50 to-rose-50 rounded-2xl p-6 border-2 border-red-200/50 hover:border-red-300 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-200/30 to-pink-200/30 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-                      <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <ShieldCheckIcon className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold border border-red-200">
-                            Admin
-                          </div>
-                        </div>
-                        <p className="text-sm text-red-600 font-semibold mb-2 uppercase tracking-wide">Total Administrators</p>
-                        <p className="text-4xl font-extrabold text-red-700 mb-2">{counts.admin.total}</p>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                          <p className="text-xs font-medium text-red-600">{counts.admin.active} active users</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="group relative bg-gradient-to-br from-blue-50 via-cyan-50 to-sky-50 rounded-2xl p-6 border-2 border-blue-200/50 hover:border-blue-300 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-200/30 to-cyan-200/30 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-                      <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <UserGroupIcon className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200">
-                            Staff
-                          </div>
-                        </div>
-                        <p className="text-sm text-blue-600 font-semibold mb-2 uppercase tracking-wide">Total Staff</p>
-                        <p className="text-4xl font-extrabold text-blue-700 mb-2">{counts.staff.total}</p>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                          <p className="text-xs font-medium text-blue-600">{counts.staff.active} active users</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="group relative bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 rounded-2xl p-6 border-2 border-green-200/50 hover:border-green-300 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-200/30 to-emerald-200/30 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-                      <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <UserIcon className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold border border-green-200">
-                            Resident
-                          </div>
-                        </div>
-                        <p className="text-sm text-green-600 font-semibold mb-2 uppercase tracking-wide">Total Residents</p>
-                        <p className="text-4xl font-extrabold text-green-700 mb-2">{counts.resident.total}</p>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                          <p className="text-xs font-medium text-green-600">{counts.resident.active} active users</p>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
+                    <p className="text-sm text-blue-600 font-medium mb-1">Total Staff</p>
+                    <p className="text-3xl font-bold text-blue-700">{counts.staff.total}</p>
+                    <p className="text-xs text-blue-500 mt-1">{counts.staff.active} active</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                    <p className="text-sm text-green-600 font-medium mb-1">Total Residents</p>
+                    <p className="text-3xl font-bold text-green-700">{counts.resident.total}</p>
+                    <p className="text-xs text-green-500 mt-1">{counts.resident.active} active</p>
                   </div>
                 </div>
               </div>
@@ -1024,55 +913,36 @@ const UserManagement = () => {
               <div className="mb-6">
                 <button
                   onClick={handleBackToOverview}
-                  className="group relative inline-flex items-center gap-3 px-6 py-3 text-sm font-semibold text-gray-700 bg-white/80 backdrop-blur-sm border-2 border-gray-200 rounded-xl hover:border-gray-300 hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 shadow-sm hover:shadow-md"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-gray-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <ArrowPathIcon className="w-5 h-5 rotate-180 group-hover:-rotate-180 transition-transform duration-500 relative z-10" />
-                  <span className="relative z-10">Back to Overview</span>
+                  <ArrowPathIcon className="w-4 h-4 rotate-180" />
+                  Back to Overview
                 </button>
               </div>
 
               {selectedRole === 'staff' ? (
                 // Full Staff Management View
-                <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-white/50 overflow-hidden w-full">
-                  <div className="relative bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-8 py-6 overflow-hidden">
-                    {/* Animated background pattern */}
-                    <div className="absolute inset-0 opacity-10">
-                      <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,.1)_50%,transparent_75%,transparent_100%)] bg-[length:20px_20px]"></div>
-                    </div>
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                    
-                    <div className="relative z-10 flex justify-between items-center">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 shadow-lg">
-                          <UserGroupIcon className="w-7 h-7 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-white font-extrabold text-2xl flex items-center gap-3">
-                            Staff Members
-                            <span className="px-4 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-bold border border-white/30">
-                              {currentCounts.total}
-                            </span>
-                          </h3>
-                          <p className="text-emerald-100 text-sm mt-1">Manage staff accounts and permissions</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-3">
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden w-full">
+                  <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-white font-semibold text-lg flex items-center gap-2">
+                        <UserGroupIcon className="w-5 h-5" />
+                        Staff Members ({currentCounts.total})
+                      </h3>
+                      <div className="flex gap-2">
                         <button
                           onClick={fetchAllUsers}
-                          className="group relative bg-blue-500/30 hover:bg-blue-500/40 text-white px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-2 backdrop-blur-sm border-2 border-blue-400/50 hover:border-blue-300 shadow-lg hover:shadow-xl overflow-hidden"
+                          className="bg-blue-500/20 hover:bg-blue-500/30 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 backdrop-blur-sm border border-blue-500/30"
                         >
-                          <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                          <ArrowPathIcon className={`w-5 h-5 relative z-10 ${loading ? 'animate-spin' : 'group-hover:rotate-180'} transition-transform duration-500`} />
-                          <span className="relative z-10">Refresh</span>
+                          <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                          Refresh
                         </button>
                         <button
                           onClick={() => setShowStaffModal(true)}
-                          className="group relative bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-2 backdrop-blur-sm border-2 border-white/30 hover:border-white/50 shadow-lg hover:shadow-xl overflow-hidden"
+                          className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 backdrop-blur-sm border border-white/30"
                         >
-                          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                          <PlusIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                          <span className="relative z-10">Create Staff Account</span>
+                          <PlusIcon className="w-4 h-4" />
+                          Create Staff Account
                         </button>
                       </div>
                     </div>
@@ -1080,72 +950,57 @@ const UserManagement = () => {
                   
                   <div className="overflow-x-auto w-full">
                     <table className="w-full text-sm min-w-full">
-                      <thead className="bg-gradient-to-r from-slate-50 via-blue-50/50 to-indigo-50/50 border-b-2 border-slate-200/50 backdrop-blur-sm">
+                      <thead className="bg-gradient-to-r from-slate-50 via-blue-50 to-indigo-50 border-b-2 border-slate-200">
                         <tr>
-                          <th className="px-6 py-5 text-left font-extrabold text-slate-700 text-xs uppercase tracking-wider min-w-[200px]">
+                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[200px]">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
-                                <UserGroupIcon className="w-4 h-4 text-white" />
-                              </div>
-                              <span>Name</span>
+                              <UserGroupIcon className="w-4 h-4 text-slate-500" />
+                              Name
                             </div>
                           </th>
-                          <th className="px-6 py-5 text-left font-extrabold text-slate-700 text-xs uppercase tracking-wider min-w-[220px]">
+                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[220px]">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-md">
-                                <PencilIcon className="w-4 h-4 text-white" />
-                              </div>
-                              <span>Email</span>
+                              <PencilIcon className="w-4 h-4 text-slate-500" />
+                              Email
                             </div>
                           </th>
-                          <th className="px-6 py-5 text-left font-extrabold text-slate-700 text-xs uppercase tracking-wider min-w-[180px]">
+                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[180px]">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
-                                <UserGroupIcon className="w-4 h-4 text-white" />
-                              </div>
-                              <span>Department</span>
+                              <UserGroupIcon className="w-4 h-4 text-slate-500" />
+                              Department
                             </div>
                           </th>
-                          <th className="px-6 py-5 text-left font-extrabold text-slate-700 text-xs uppercase tracking-wider min-w-[150px]">
+                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[150px]">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
-                                <PencilIcon className="w-4 h-4 text-white" />
-                              </div>
-                              <span>Position</span>
+                              <PencilIcon className="w-4 h-4 text-slate-500" />
+                              Position
                             </div>
                           </th>
-                          <th className="px-6 py-5 text-left font-extrabold text-slate-700 text-xs uppercase tracking-wider min-w-[120px]">
+                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[120px]">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-md">
-                                <CheckIcon className="w-4 h-4 text-white" />
-                              </div>
-                              <span>Status</span>
+                              <CheckIcon className="w-4 h-4 text-slate-500" />
+                              Status
                             </div>
                           </th>
-                          <th className="px-6 py-5 text-left font-extrabold text-slate-700 text-xs uppercase tracking-wider min-w-[180px]">
+                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[180px]">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-md">
-                                <PencilIcon className="w-4 h-4 text-white" />
-                              </div>
-                              <span>Actions</span>
+                              <PencilIcon className="w-4 h-4 text-slate-500" />
+                              Actions
                             </div>
                           </th>
                         </tr>
                       </thead>
 
-                      <tbody className="divide-y divide-slate-100/50">
+                      <tbody className="divide-y divide-slate-200">
                         {loading ? (
                           <tr>
-                            <td colSpan="6" className="px-6 py-20 text-center">
-                              <div className="flex flex-col items-center gap-5">
-                                <div className="relative w-24 h-24">
-                                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full animate-pulse"></div>
-                                  <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
-                                    <UserGroupIcon className="w-12 h-12 text-blue-500 animate-pulse" />
-                                  </div>
+                            <td colSpan="6" className="px-6 py-16 text-center">
+                              <div className="flex flex-col items-center gap-4">
+                                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
+                                  <UserGroupIcon className="w-10 h-10 text-slate-400" />
                                 </div>
                                 <div className="text-center">
-                                  <h3 className="text-xl font-bold text-slate-700 mb-2">Loading Staff Data</h3>
+                                  <h3 className="text-lg font-semibold text-slate-600 mb-2">Loading Staff Data</h3>
                                   <p className="text-slate-500 text-sm">Please wait while we fetch the staff information...</p>
                                 </div>
                               </div>
@@ -1153,16 +1008,13 @@ const UserManagement = () => {
                           </tr>
                         ) : currentUsers.length === 0 ? (
                           <tr>
-                            <td colSpan="6" className="px-6 py-20 text-center">
-                              <div className="flex flex-col items-center gap-5">
-                                <div className="relative w-24 h-24">
-                                  <div className="absolute inset-0 bg-gradient-to-br from-slate-300 to-slate-400 rounded-full"></div>
-                                  <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
-                                    <UserGroupIcon className="w-12 h-12 text-slate-400" />
-                                  </div>
+                            <td colSpan="6" className="px-6 py-16 text-center">
+                              <div className="flex flex-col items-center gap-4">
+                                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
+                                  <UserGroupIcon className="w-10 h-10 text-slate-400" />
                                 </div>
                                 <div className="text-center">
-                                  <h3 className="text-xl font-bold text-slate-700 mb-2">No Staff Members Found</h3>
+                                  <h3 className="text-lg font-semibold text-slate-600 mb-2">No Staff Members Found</h3>
                                   <p className="text-slate-500 text-sm max-w-md">
                                     No staff members have been added yet. Create the first staff account to get started.
                                   </p>
@@ -1171,59 +1023,57 @@ const UserManagement = () => {
                             </td>
                           </tr>
                         ) : (
-                          currentUsers.map((member, index) => (
+                          currentUsers.map((member) => (
                             <tr 
                               key={member.id} 
-                              className="group hover:bg-gradient-to-r hover:from-blue-50/80 hover:via-indigo-50/80 hover:to-purple-50/80 transition-all duration-300 border-b border-slate-100/50 hover:border-blue-200 hover:shadow-md"
-                              style={{ animationDelay: `${index * 50}ms` }}
+                              className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 group border-b border-slate-100"
                             >
-                              <td className="px-6 py-5">
-                                <div className="flex items-center gap-4">
-                                  <div className="relative w-12 h-12 bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                                    <div className="absolute inset-0 bg-gradient-to-tr from-white/30 to-transparent rounded-2xl"></div>
-                                    <span className="text-lg font-extrabold text-white relative z-10">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center">
+                                    <span className="text-lg font-semibold text-green-800">
                                       {member.name[0].toUpperCase()}
                                     </span>
                                   </div>
                                   <div>
-                                    <div className="font-bold text-slate-900 text-base group-hover:text-blue-700 transition-colors">{member.name}</div>
-                                    <div className="text-xs text-slate-500 font-medium">{member.role}</div>
+                                    <div className="font-semibold text-slate-900 text-sm">{member.name}</div>
+                                    <div className="text-xs text-slate-500">{member.role}</div>
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-6 py-5">
-                                <div className="text-slate-700 text-sm font-semibold group-hover:text-blue-700 transition-colors">{member.email}</div>
+                              <td className="px-6 py-4">
+                                <div className="text-slate-700 text-sm font-medium">{member.email}</div>
                               </td>
-                              <td className="px-6 py-5">
-                                <span className="inline-flex items-center bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 text-blue-700 px-4 py-2 rounded-xl text-xs font-bold border-2 border-blue-200/50 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
+                              <td className="px-6 py-4">
+                                <span className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold border border-blue-200">
                                   {member.department}
                                 </span>
                               </td>
-                              <td className="px-6 py-5">
-                                <span className="inline-flex items-center bg-gradient-to-r from-purple-100 via-pink-100 to-rose-100 text-purple-700 px-4 py-2 rounded-xl text-xs font-bold border-2 border-purple-200/50 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
+                              <td className="px-6 py-4">
+                                <span className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1.5 rounded-full text-xs font-semibold border border-purple-200">
                                   {member.position}
                                 </span>
                               </td>
-                              <td className="px-6 py-5">
-                                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border-2 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 ${
+                              <td className="px-6 py-4">
+                                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${
                                   member.active 
-                                    ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-300/50' 
-                                    : 'bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border-red-300/50'
+                                    ? 'bg-green-100 text-green-800 border-green-200' 
+                                    : 'bg-red-100 text-red-800 border-red-200'
                                 }`}>
                                   {member.active ? (
                                     <>
-                                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                      <span>Active</span>
+                                      <CheckIcon className="w-4 h-4" />
+                                      Active
                                     </>
                                   ) : (
                                     <>
-                                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                                      <span>Inactive</span>
+                                      <XMarkIcon className="w-4 h-4" />
+                                      Inactive
                                     </>
                                   )}
                                 </span>
                               </td>
-                              <td className="px-6 py-5">
+                              <td className="px-6 py-4">
                                 <div className="flex flex-wrap gap-2">
                                   {canEditStaff && (
                                     <button
@@ -1288,11 +1138,10 @@ const UserManagement = () => {
                                         });
                                         setShowPermissionsModal(true);
                                       }}
-                                      className="group relative text-green-700 hover:text-white cursor-pointer p-3 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-500 hover:to-emerald-600 border-2 border-green-200 hover:border-green-500 transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-md hover:shadow-xl overflow-hidden"
+                                      className="text-green-600 hover:text-green-800 cursor-pointer p-2 rounded-lg hover:bg-green-50 transition-all duration-300 transform hover:scale-110"
                                       title="Edit Permissions"
                                     >
-                                      <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                      <PencilIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                                      <PencilIcon className="w-5 h-5" />
                                     </button>
                                   )}
                                   
@@ -1304,27 +1153,25 @@ const UserManagement = () => {
                                           autoClose: 3000
                                         });
                                       }}
-                                      className="group relative text-blue-700 hover:text-white cursor-pointer p-3 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 hover:from-blue-500 hover:to-cyan-600 border-2 border-blue-200 hover:border-blue-500 transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-md hover:shadow-xl overflow-hidden"
+                                      className="text-blue-600 hover:text-blue-800 cursor-pointer p-2 rounded-lg hover:bg-blue-50 transition-all duration-300 transform hover:scale-110"
                                       title="View Details"
                                     >
-                                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                      <EyeIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                                      <EyeIcon className="w-5 h-5" />
                                     </button>
                                   )}
                                   
                                   {canDisableStaff && (
                                     <button
                                       onClick={() => handleDeactivate(member.id)}
-                                      className="group relative text-red-700 hover:text-white cursor-pointer p-3 rounded-xl bg-gradient-to-br from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-600 border-2 border-red-200 hover:border-red-500 transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-md hover:shadow-xl overflow-hidden"
+                                      className="text-red-600 hover:text-red-800 cursor-pointer p-2 rounded-lg hover:bg-red-50 transition-all duration-300 transform hover:scale-110"
                                       title="Deactivate Staff"
                                     >
-                                      <div className="absolute inset-0 bg-gradient-to-r from-red-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                      <XMarkIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                                      <XMarkIcon className="w-5 h-5" />
                                     </button>
                                   )}
                                   
                                   {!canEditStaff && !canViewStaff && !canDisableStaff && (
-                                    <span className="text-xs text-gray-400 italic px-3 py-2">No actions available</span>
+                                    <span className="text-xs text-gray-400 italic">No actions available</span>
                                   )}
                                 </div>
                               </td>
