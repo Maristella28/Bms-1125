@@ -13,6 +13,7 @@ import { useAdminResponsiveLayout } from "../../hooks/useAdminResponsiveLayout";
 import { usePermissions } from "../../hooks/usePermissions";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import AnalyticsDashboard from "./components/analytics/AnalyticsDashboard";
+import ExcelJS from 'exceljs';
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -417,7 +418,7 @@ function exportToPDF(data) {
   }
 }
 
-// Enhanced Excel export function with demographic-style filtered data
+// Enhanced Excel export function with demographic-style filtered data - True Excel .xlsx format
 function exportToExcel(data, filename = 'residents-demographic-report') {
   try {
     const items = Array.isArray(data) ? data : [];
@@ -450,18 +451,6 @@ function exportToExcel(data, filename = 'residents-demographic-report') {
       } catch (e) {
         return dateStr;
       }
-    };
-
-    const formatArray = (arr) => {
-      if (!arr) return '';
-      if (Array.isArray(arr)) return arr.join(', ');
-      return String(arr);
-    };
-
-    const formatBoolean = (val) => {
-      if (val === true || val === '1' || val === 1) return 'Yes';
-      if (val === false || val === '0' || val === 0) return 'No';
-      return val ? 'Yes' : 'No';
     };
 
     // Helper functions for demographic analysis
@@ -568,27 +557,109 @@ function exportToExcel(data, filename = 'residents-demographic-report') {
       demographicData.sectors[sector] = (demographicData.sectors[sector] || 0) + 1;
     });
 
-    // Create structured CSV content
-    const csvRows = [];
-    
-    // Header
-    csvRows.push(['BARANGAY DEMOGRAPHIC INFORMATION REPORT']);
-    csvRows.push(['Generated on:', new Date().toLocaleDateString()]);
-    csvRows.push(['Total Records:', items.length]);
-    csvRows.push([]);
-    
-    // Section A-E: General Demographic Information
-    csvRows.push(['I. GENERAL DEMOGRAPHIC INFORMATION']);
-    csvRows.push(['A. No. of Registered Voters:', demographicData.registeredVoters]);
-    csvRows.push(['B. No. of Population:', demographicData.totalPopulation]);
-    csvRows.push(['C. With RBIs?:', 'No']);
-    csvRows.push(['D. No. of Households:', demographicData.totalHouseholds]);
-    csvRows.push(['E. No. of Families:', demographicData.totalFamilies]);
-    csvRows.push([]);
-    
+    // Create workbook using ExcelJS
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Demographic Report');
+
+    // Define styles
+    const titleStyle = {
+      font: { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+      border: {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      }
+    };
+
+    const sectionHeaderStyle = {
+      font: { name: 'Calibri', size: 12, bold: true, color: { argb: 'FFFFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF70AD47' } },
+      alignment: { horizontal: 'left', vertical: 'middle', wrapText: true },
+      border: {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      }
+    };
+
+    const tableHeaderStyle = {
+      font: { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+      border: {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      }
+    };
+
+    const dataCellStyle = {
+      font: { name: 'Calibri', size: 10 },
+      alignment: { vertical: 'middle', wrapText: true },
+      border: {
+        top: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+        bottom: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+        left: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+        right: { style: 'thin', color: { argb: 'FFD9D9D9' } }
+      }
+    };
+
+    const evenRowStyle = {
+      ...dataCellStyle,
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } }
+    };
+
+    let currentRow = 1;
+
+    // Title and Header
+    const titleRow = worksheet.addRow(['BARANGAY DEMOGRAPHIC INFORMATION REPORT']);
+    titleRow.getCell(1).style = titleStyle;
+    worksheet.mergeCells(currentRow, 1, currentRow, 4);
+    currentRow++;
+
+    const dateRow = worksheet.addRow(['Generated on:', new Date().toLocaleDateString()]);
+    dateRow.getCell(1).style = { font: { bold: true } };
+    currentRow++;
+
+    const totalRow = worksheet.addRow(['Total Records:', items.length]);
+    totalRow.getCell(1).style = { font: { bold: true } };
+    currentRow++;
+
+    worksheet.addRow([]); // Empty row
+    currentRow++;
+
+    // Section I: General Demographic Information
+    const sectionIRow = worksheet.addRow(['I. GENERAL DEMOGRAPHIC INFORMATION']);
+    sectionIRow.getCell(1).style = sectionHeaderStyle;
+    worksheet.mergeCells(currentRow, 1, currentRow, 4);
+    currentRow++;
+
+    worksheet.addRow(['A. No. of Registered Voters:', demographicData.registeredVoters]);
+    worksheet.addRow(['B. No. of Population:', demographicData.totalPopulation]);
+    worksheet.addRow(['C. With RBIs?:', 'No']);
+    worksheet.addRow(['D. No. of Households:', demographicData.totalHouseholds]);
+    worksheet.addRow(['E. No. of Families:', demographicData.totalFamilies]);
+    currentRow += 5;
+
+    worksheet.addRow([]); // Empty row
+    currentRow++;
+
     // Section F: Population by Age Bracket
-    csvRows.push(['F. POPULATION BY AGE BRACKET']);
-    csvRows.push(['AGE', 'MALE', 'FEMALE', 'TOTAL']);
+    const sectionFRow = worksheet.addRow(['F. POPULATION BY AGE BRACKET']);
+    sectionFRow.getCell(1).style = sectionHeaderStyle;
+    worksheet.mergeCells(currentRow, 1, currentRow, 4);
+    currentRow++;
+
+    const ageHeaderRow = worksheet.addRow(['AGE', 'MALE', 'FEMALE', 'TOTAL']);
+    ageHeaderRow.eachCell((cell) => {
+      cell.style = tableHeaderStyle;
+    });
+    currentRow++;
     
     const ageGroups = [
       'Under 5 years old', '5-9 years old', '10-14 years old', '15-19 years old',
@@ -598,17 +669,35 @@ function exportToExcel(data, filename = 'residents-demographic-report') {
       '80 years old and over'
     ];
     
-    ageGroups.forEach(ageGroup => {
+    ageGroups.forEach((ageGroup, index) => {
       const maleCount = items.filter(r => getAgeGroup(r.age) === ageGroup && (r.sex === 'Male' || r.sex === 'male')).length;
       const femaleCount = items.filter(r => getAgeGroup(r.age) === ageGroup && (r.sex === 'Female' || r.sex === 'female')).length;
       const total = maleCount + femaleCount;
-      csvRows.push([ageGroup, maleCount, femaleCount, total]);
+      const row = worksheet.addRow([ageGroup, maleCount, femaleCount, total]);
+      row.eachCell((cell, colNumber) => {
+        cell.style = index % 2 === 0 ? evenRowStyle : dataCellStyle;
+        if (colNumber > 1) {
+          cell.numFmt = '#,##0';
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        }
+      });
+      currentRow++;
     });
-    csvRows.push([]);
     
+    worksheet.addRow([]); // Empty row
+    currentRow++;
+
     // Section G: Population by Sector
-    csvRows.push(['G. POPULATION BY SECTOR']);
-    csvRows.push(['SECTOR', 'MALE', 'FEMALE', 'TOTAL']);
+    const sectionGRow = worksheet.addRow(['G. POPULATION BY SECTOR']);
+    sectionGRow.getCell(1).style = sectionHeaderStyle;
+    worksheet.mergeCells(currentRow, 1, currentRow, 4);
+    currentRow++;
+
+    const sectorHeaderRow = worksheet.addRow(['SECTOR', 'MALE', 'FEMALE', 'TOTAL']);
+    sectorHeaderRow.eachCell((cell) => {
+      cell.style = tableHeaderStyle;
+    });
+    currentRow++;
     
     const sectorOrder = [
       'Labor Force', 'Unemployed', 'Out-of-School Youth (OSY)', 
@@ -616,28 +705,48 @@ function exportToExcel(data, filename = 'residents-demographic-report') {
       'Overseas Filipino Workers (OFWs)', 'Other'
     ];
     
+    let sectorIndex = 0;
     sectorOrder.forEach(sector => {
       const maleCount = items.filter(r => getSector(r) === sector && (r.sex === 'Male' || r.sex === 'male')).length;
       const femaleCount = items.filter(r => getSector(r) === sector && (r.sex === 'Female' || r.sex === 'female')).length;
       const total = maleCount + femaleCount;
       if (total > 0) {
-        csvRows.push([sector, maleCount, femaleCount, total]);
+        const row = worksheet.addRow([sector, maleCount, femaleCount, total]);
+        row.eachCell((cell, colNumber) => {
+          cell.style = sectorIndex % 2 === 0 ? evenRowStyle : dataCellStyle;
+          if (colNumber > 1) {
+            cell.numFmt = '#,##0';
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          }
+        });
+        sectorIndex++;
+        currentRow++;
       }
     });
-    csvRows.push([]);
     
+    worksheet.addRow([]); // Empty row
+    currentRow++;
+
     // Detailed Resident Records
-    csvRows.push(['DETAILED RESIDENT RECORDS']);
-    csvRows.push([
+    const detailedHeaderRow = worksheet.addRow(['DETAILED RESIDENT RECORDS']);
+    detailedHeaderRow.getCell(1).style = sectionHeaderStyle;
+    worksheet.mergeCells(currentRow, 1, currentRow, 17);
+    currentRow++;
+
+    const residentTableHeader = worksheet.addRow([
       'Resident ID', 'Full Name', 'Age', 'Sex', 'Civil Status',
       'Birth Date', 'Birth Place', 'Email', 'Contact Number', 'Current Address',
       'Household No', 'Relation to Head',
       'Educational Attainment', 'Occupation Type', 'Sector Classification',
       'Verification Status', 'Last Modified'
     ]);
+    residentTableHeader.eachCell((cell) => {
+      cell.style = tableHeaderStyle;
+    });
+    currentRow++;
     
-    items.forEach(resident => {
-      csvRows.push([
+    items.forEach((resident, index) => {
+      const row = worksheet.addRow([
         resident.resident_id || resident.id || '',
         toName(resident),
         resident.age || '',
@@ -656,34 +765,66 @@ function exportToExcel(data, filename = 'residents-demographic-report') {
         resident.verification_status || 'Pending',
         formatDate(resident.last_modified || resident.updated_at)
       ]);
+      
+      row.eachCell((cell) => {
+        cell.style = index % 2 === 0 ? evenRowStyle : dataCellStyle;
+      });
+      currentRow++;
     });
 
-    // Convert to CSV format
-    const csvContent = csvRows
-      .map(row => row.map(cell => {
-        const cellStr = String(cell || '');
-        if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n') || cellStr.includes('\r')) {
-          return `"${cellStr.replace(/"/g, '""')}"`;
-        }
-        return cellStr;
-      }).join(','))
-      .join('\r\n');
+    // Set column widths
+    worksheet.columns = [
+      { width: 20 },  // Column A - Labels/IDs
+      { width: 25 },  // Column B - Names
+      { width: 8 },   // Column C - Age
+      { width: 10 },  // Column D - Sex
+      { width: 12 },  // Column E - Civil Status
+      { width: 12 },  // Column F - Birth Date
+      { width: 20 },  // Column G - Birth Place
+      { width: 25 },  // Column H - Email
+      { width: 15 },  // Column I - Contact
+      { width: 30 },  // Column J - Address
+      { width: 12 },  // Column K - Household No
+      { width: 15 },  // Column L - Relation
+      { width: 20 },  // Column M - Education
+      { width: 20 },  // Column N - Occupation
+      { width: 25 },  // Column O - Sector
+      { width: 15 },  // Column P - Verification
+      { width: 18 }   // Column Q - Last Modified
+    ];
 
-    // Create and download the file
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${filename}.csv`;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Set row heights for headers
+    worksheet.getRow(1).height = 25; // Title
+    worksheet.getRow(5).height = 22; // Section I header
+    worksheet.getRow(12).height = 22; // Section F header
+    worksheet.getRow(30).height = 22; // Section G header (approximate)
+    const detailedRowIndex = currentRow - items.length - 2;
+    worksheet.getRow(detailedRowIndex).height = 22; // Detailed records header
 
-    if (window.__showInfo) {
-      window.__showInfo(`Demographic Excel report completed successfully! ${items.length} records exported with demographic analysis.`, 'Export Success', 'success');
-    }
+    // Generate Excel file
+    workbook.xlsx.writeBuffer().then((buffer) => {
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${filename}.xlsx`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      if (window.__showInfo) {
+        window.__showInfo(`Demographic Excel report completed successfully! ${items.length} records exported with demographic analysis.`, 'Export Success', 'success');
+      }
+    }).catch((error) => {
+      console.error('Error generating Excel file:', error);
+      if (window.__showInfo) {
+        window.__showInfo('Failed to generate Excel file. Please try again.', 'Export Error', 'error');
+      } else {
+        alert('Failed to generate Excel file. Please try again.');
+      }
+    });
 
   } catch (e) {
     console.error('Excel export error:', e);
