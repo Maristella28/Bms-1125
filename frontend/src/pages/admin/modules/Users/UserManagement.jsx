@@ -27,40 +27,78 @@ import { usePermissions } from '../../../../hooks/usePermissions';
 const RoleCard = ({ role, count, activeCount, icon, color, gradient, onClick, loading }) => (
   <div 
     onClick={onClick}
-    className={`relative overflow-hidden rounded-2xl p-6 shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-105 bg-white group`}
+    className="relative overflow-hidden rounded-3xl p-8 shadow-2xl border-2 border-white/50 hover:border-white/80 transition-all duration-700 cursor-pointer transform hover:scale-[1.02] hover:-translate-y-2 bg-gradient-to-br from-white via-white to-gray-50/50 group backdrop-blur-sm"
+    style={{
+      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+    }}
   >
-    {/* Animated background gradient */}
-    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
+    {/* Animated background gradient overlay */}
+    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-15 transition-opacity duration-700`}></div>
+    
+    {/* Animated shimmer effect */}
+    <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
     
     {/* Content */}
     <div className="relative z-10">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${color} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-          {icon}
+      <div className="flex items-center justify-between mb-6">
+        <div className={`w-20 h-20 rounded-3xl flex items-center justify-center ${color} shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 relative overflow-hidden`}>
+          <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-20`}></div>
+          <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+            {icon}
+          </div>
         </div>
-        <div className={`px-3 py-1 rounded-full text-xs font-bold ${color.replace('bg-', 'bg-').replace('-600', '-100')} ${color.replace('bg-', 'text-').replace('-100', '-700')}`}>
-          {loading ? '...' : count} Total
+        <div className={`px-4 py-2 rounded-full text-sm font-bold shadow-lg backdrop-blur-sm ${color.replace('bg-', 'bg-').replace('-600', '-100')} ${color.replace('bg-', 'text-').replace('-100', '-700')} border-2 border-white/50 group-hover:scale-110 transition-transform duration-300`}>
+          {loading ? (
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-current rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-current rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-2 h-2 bg-current rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+          ) : (
+            `${count} Total`
+          )}
         </div>
       </div>
       
-      <h3 className="text-2xl font-bold text-gray-900 mb-2">{role}</h3>
-      <div className="flex items-center gap-2 mb-4">
-        <CheckIcon className="w-5 h-5 text-green-600" />
-        <span className="text-sm text-gray-600">
-          <span className="font-semibold text-gray-900">{loading ? '...' : activeCount}</span> Active
-        </span>
+      <h3 className="text-3xl font-extrabold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-3 group-hover:scale-105 transition-transform duration-300">
+        {role}
+      </h3>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
+          <CheckIcon className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-sm text-gray-500 font-medium">Active Users</span>
+          <span className="text-xl font-bold text-gray-900">
+            {loading ? (
+              <span className="inline-flex items-center gap-1">
+                <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></span>
+              </span>
+            ) : (
+              activeCount
+            )}
+          </span>
+        </div>
       </div>
       
-      <div className="mt-4 pt-4 border-t border-gray-200">
+      <div className="mt-6 pt-6 border-t-2 border-gradient-to-r from-gray-200 to-transparent">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500">Click to manage</span>
-          <ArrowPathIcon className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider group-hover:text-gray-600 transition-colors">
+            Click to manage
+          </span>
+          <div className="flex items-center gap-2">
+            <ArrowPathIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-700 group-hover:rotate-180 transition-all duration-500" />
+          </div>
         </div>
       </div>
     </div>
     
     {/* Decorative elements */}
-    <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${gradient} rounded-full transform translate-x-8 -translate-y-8 opacity-5 group-hover:opacity-10 transition-opacity duration-500`}></div>
+    <div className={`absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br ${gradient} rounded-full opacity-10 group-hover:opacity-20 group-hover:scale-150 transition-all duration-700 blur-2xl`}></div>
+    <div className={`absolute -bottom-8 -left-8 w-24 h-24 bg-gradient-to-tr ${gradient} rounded-full opacity-5 group-hover:opacity-15 transition-opacity duration-700 blur-xl`}></div>
+    
+    {/* Corner accent */}
+    <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-white/50 to-transparent rounded-bl-full"></div>
   </div>
 );
 
@@ -103,50 +141,6 @@ const UserManagement = () => {
   const [toastMessage, setToastMessage] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
-
-  // Admin Management State
-  const [showAdminModal, setShowAdminModal] = useState(false);
-  const [editingAdmin, setEditingAdmin] = useState(null);
-  const [adminFormData, setAdminFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'admin'
-  });
-  const [adminFormErrors, setAdminFormErrors] = useState({});
-  const [showAdminPassword, setShowAdminPassword] = useState(false);
-  const [adminPasswordStrength, setAdminPasswordStrength] = useState(0);
-  const [showAdminConfirmModal, setShowAdminConfirmModal] = useState(false);
-
-  // Resident Management State
-  const [showResidentModal, setShowResidentModal] = useState(false);
-  const [editingResident, setEditingResident] = useState(null);
-  const [residentFormData, setResidentFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'residents',
-    first_name: '',
-    middle_name: '',
-    last_name: '',
-    name_suffix: '',
-    birth_date: '',
-    birth_place: '',
-    age: '',
-    nationality: '',
-    mobile_number: '',
-    sex: '',
-    civil_status: '',
-    religion: '',
-    current_address: '',
-    years_in_barangay: '',
-    voter_status: '',
-    household_no: ''
-  });
-  const [residentFormErrors, setResidentFormErrors] = useState({});
-  const [showResidentPassword, setShowResidentPassword] = useState(false);
-  const [residentPasswordStrength, setResidentPasswordStrength] = useState(0);
-  const [showResidentConfirmModal, setShowResidentConfirmModal] = useState(false);
 
   // Check permissions for staff management actions
   const canEditStaff = isAdmin() || canPerformAction('edit', 'staff') || hasModuleAccess('staff');
@@ -844,291 +838,6 @@ const UserManagement = () => {
     }
   }, [toastMessage]);
 
-  // Admin Management Functions
-  const handleAdminInputChange = (e) => {
-    const { name, value } = e.target;
-    
-    if (name === 'password') {
-      setAdminPasswordStrength(calculatePasswordStrength(value));
-    }
-    
-    setAdminFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    if (adminFormErrors[name]) {
-      setAdminFormErrors(prevErrors => ({
-        ...prevErrors,
-        [name]: ''
-      }));
-    }
-  };
-
-  const validateAdminForm = () => {
-    const errors = {};
-    
-    if (!adminFormData.name.trim()) errors.name = 'Name is required';
-    if (!adminFormData.email.trim()) errors.email = 'Email is required';
-    else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(adminFormData.email)) {
-      errors.email = 'Invalid email format';
-    }
-    
-    if (!adminFormData.password) {
-      errors.password = 'Password is required';
-    } else if (adminFormData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(adminFormData.password)) {
-      errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
-    }
-    
-    setAdminFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleAdminSubmit = async (e) => {
-    if (e) {
-      e.preventDefault();
-    }
-    
-    if (!validateAdminForm()) {
-      return;
-    }
-
-    try {
-      await fetch('/sanctum/csrf-cookie', { credentials: 'include' });
-
-      const result = await axiosInstance.post('/api/admin/register', {
-        name: adminFormData.name.trim(),
-        email: adminFormData.email.trim(),
-        password: adminFormData.password,
-        role: 'admin'
-      });
-
-      if (result.data?.requires_verification) {
-        setShowVerificationModal(true);
-        setVerificationData({
-          userId: result.data.user_id,
-          email: result.data.email,
-          staffName: adminFormData.name
-        });
-      } else {
-        toast.success(result.data?.message || 'Admin account created successfully', {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      }
-
-      setShowAdminModal(false);
-      setShowAdminConfirmModal(false);
-      await fetchAllUsers();
-
-      setAdminFormData({
-        name: '',
-        email: '',
-        password: '',
-        role: 'admin'
-      });
-      
-      setAdminPasswordStrength(0);
-      setShowAdminPassword(false);
-    } catch (error) {
-      console.error('Error creating admin account:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to create admin account';
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 5000
-      });
-    }
-  };
-
-  const handleAdminConfirmSubmit = async () => {
-    await handleAdminSubmit();
-    setShowAdminConfirmModal(false);
-  };
-
-  const handleDeleteAdmin = async (adminId) => {
-    if (!window.confirm('Are you sure you want to delete this admin account? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      await axiosInstance.delete(`/api/admin/user/${adminId}`);
-      toast.success('Admin account deleted successfully');
-      await fetchAllUsers();
-    } catch (error) {
-      console.error('Error deleting admin:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete admin account');
-    }
-  };
-
-  // Resident Management Functions
-  const handleResidentInputChange = (e) => {
-    const { name, value } = e.target;
-    
-    if (name === 'password') {
-      setResidentPasswordStrength(calculatePasswordStrength(value));
-    }
-    
-    if (name === 'mobile_number') {
-      const onlyNums = value.replace(/\D/g, '');
-      if (onlyNums.length <= 11) {
-        setResidentFormData(prev => ({
-          ...prev,
-          [name]: onlyNums
-        }));
-      }
-      return;
-    }
-    
-    setResidentFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    if (residentFormErrors[name]) {
-      setResidentFormErrors(prevErrors => ({
-        ...prevErrors,
-        [name]: ''
-      }));
-    }
-  };
-
-  const validateResidentForm = () => {
-    const errors = {};
-    
-    if (!residentFormData.name.trim()) errors.name = 'Name is required';
-    if (!residentFormData.email.trim()) errors.email = 'Email is required';
-    else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(residentFormData.email)) {
-      errors.email = 'Invalid email format';
-    }
-    
-    if (!residentFormData.password) {
-      errors.password = 'Password is required';
-    } else if (residentFormData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters';
-    }
-    
-    if (!residentFormData.first_name.trim()) errors.first_name = 'First name is required';
-    if (!residentFormData.last_name.trim()) errors.last_name = 'Last name is required';
-    if (!residentFormData.birth_date) errors.birth_date = 'Birth date is required';
-    if (!residentFormData.mobile_number) errors.mobile_number = 'Mobile number is required';
-    if (!residentFormData.current_address.trim()) errors.current_address = 'Address is required';
-    
-    setResidentFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleResidentSubmit = async (e) => {
-    if (e) {
-      e.preventDefault();
-    }
-    
-    if (!validateResidentForm()) {
-      return;
-    }
-
-    try {
-      await fetch('/sanctum/csrf-cookie', { credentials: 'include' });
-
-      // First create the user account
-      const userResult = await axiosInstance.post('/api/admin/register', {
-        name: residentFormData.name.trim(),
-        email: residentFormData.email.trim(),
-        password: residentFormData.password,
-        role: 'residents'
-      });
-
-      if (userResult.data?.user_id) {
-        // Then create the resident profile
-        const formData = new FormData();
-        formData.append('user_id', userResult.data.user_id);
-        formData.append('first_name', residentFormData.first_name.trim());
-        formData.append('middle_name', residentFormData.middle_name || '');
-        formData.append('last_name', residentFormData.last_name.trim());
-        formData.append('name_suffix', residentFormData.name_suffix || '');
-        formData.append('birth_date', residentFormData.birth_date);
-        formData.append('birth_place', residentFormData.birth_place || '');
-        formData.append('age', residentFormData.age || '');
-        formData.append('nationality', residentFormData.nationality || 'Filipino');
-        formData.append('mobile_number', residentFormData.mobile_number);
-        formData.append('sex', residentFormData.sex);
-        formData.append('civil_status', residentFormData.civil_status);
-        formData.append('religion', residentFormData.religion || '');
-        formData.append('current_address', residentFormData.current_address.trim());
-        formData.append('years_in_barangay', residentFormData.years_in_barangay || '0');
-        formData.append('voter_status', residentFormData.voter_status || '');
-        formData.append('household_no', residentFormData.household_no || '');
-
-        await axiosInstance.post('/residents/complete-profile', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-
-        toast.success('Resident account created successfully', {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      }
-
-      setShowResidentModal(false);
-      setShowResidentConfirmModal(false);
-      await fetchAllUsers();
-
-      setResidentFormData({
-        name: '',
-        email: '',
-        password: '',
-        role: 'residents',
-        first_name: '',
-        middle_name: '',
-        last_name: '',
-        name_suffix: '',
-        birth_date: '',
-        birth_place: '',
-        age: '',
-        nationality: '',
-        mobile_number: '',
-        sex: '',
-        civil_status: '',
-        religion: '',
-        current_address: '',
-        years_in_barangay: '',
-        voter_status: '',
-        household_no: ''
-      });
-      
-      setResidentPasswordStrength(0);
-      setShowResidentPassword(false);
-    } catch (error) {
-      console.error('Error creating resident account:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to create resident account';
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 5000
-      });
-    }
-  };
-
-  const handleResidentConfirmSubmit = async () => {
-    await handleResidentSubmit();
-    setShowResidentConfirmModal(false);
-  };
-
-  const handleDeleteResident = async (residentId) => {
-    if (!window.confirm('Are you sure you want to delete this resident account? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      await axiosInstance.delete(`/api/admin/user/${residentId}`);
-      toast.success('Resident account deleted successfully');
-      await fetchAllUsers();
-    } catch (error) {
-      console.error('Error deleting resident:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete resident account');
-    }
-  };
-
   const handleRoleClick = (role) => {
     setSelectedRole(role);
   };
@@ -1149,30 +858,47 @@ const UserManagement = () => {
           {!selectedRole ? (
             <>
               {/* Enhanced Header */}
-              <div className="text-center space-y-4">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full shadow-xl mb-4">
-                  <UserGroupIcon className="w-10 h-10 text-white" />
+              <div className="text-center space-y-6 relative">
+                {/* Animated background decoration */}
+                <div className="absolute inset-0 -z-10 overflow-hidden">
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-to-br from-green-400/20 to-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
                 </div>
-                <h1 className="text-5xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent tracking-tight">
-                  User Management System
-                </h1>
-                <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
-                  Comprehensive management system for all user accounts, roles, permissions, and access control with real-time monitoring.
+                
+                <div className="relative inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 rounded-3xl shadow-2xl mb-6 transform hover:scale-110 hover:rotate-6 transition-all duration-500 group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-3xl"></div>
+                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-transparent via-white/10 to-transparent animate-shimmer"></div>
+                  <UserGroupIcon className="w-12 h-12 text-white relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                  <div className="absolute -inset-1 bg-gradient-to-br from-green-400 to-emerald-600 rounded-3xl blur opacity-50 group-hover:opacity-75 transition-opacity duration-300"></div>
+                </div>
+                
+                <div className="space-y-3">
+                  <h1 className="text-6xl font-extrabold bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent tracking-tight animate-gradient">
+                    User Management System
+                  </h1>
+                  <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-emerald-500 mx-auto rounded-full"></div>
+                </div>
+                
+                <p className="text-gray-600 text-xl max-w-3xl mx-auto leading-relaxed font-medium">
+                  Comprehensive management system for all user accounts, roles, permissions, and access control with{' '}
+                  <span className="text-emerald-600 font-semibold">real-time monitoring</span>.
                 </p>
                 
                 {/* Help System Buttons */}
-                <div className="flex flex-wrap justify-center gap-4 mt-8">
-                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:text-green-700 transition-colors duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
-                    <BookOpenIcon className="w-4 h-4" />
-                    Help Guide
+                <div className="flex flex-wrap justify-center gap-4 mt-10">
+                  <button className="group relative inline-flex items-center gap-3 px-6 py-3 text-sm font-semibold text-green-700 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl hover:border-green-300 hover:from-green-100 hover:to-emerald-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-400/10 to-emerald-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <BookOpenIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                    <span className="relative z-10">Help Guide</span>
                   </button>
-                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
-                    <PlayIcon className="w-4 h-4" />
-                    Quick Start
+                  <button className="group relative inline-flex items-center gap-3 px-6 py-3 text-sm font-semibold text-blue-700 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl hover:border-blue-300 hover:from-blue-100 hover:to-cyan-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-cyan-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <PlayIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                    <span className="relative z-10">Quick Start</span>
                   </button>
-                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 hover:text-purple-700 transition-colors duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
-                    <QuestionMarkCircleIcon className="w-4 h-4" />
-                    FAQ
+                  <button className="group relative inline-flex items-center gap-3 px-6 py-3 text-sm font-semibold text-purple-700 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl hover:border-purple-300 hover:from-purple-100 hover:to-pink-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-pink-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <QuestionMarkCircleIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                    <span className="relative z-10">FAQ</span>
                   </button>
                 </div>
               </div>
@@ -1212,26 +938,82 @@ const UserManagement = () => {
               </div>
 
               {/* Summary Statistics */}
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <UserGroupIcon className="w-6 h-6 text-green-600" />
-                  System Overview
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl p-4 border border-red-200">
-                    <p className="text-sm text-red-600 font-medium mb-1">Total Administrators</p>
-                    <p className="text-3xl font-bold text-red-700">{counts.admin.total}</p>
-                    <p className="text-xs text-red-500 mt-1">{counts.admin.active} active</p>
+              <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-white/50 p-8 overflow-hidden">
+                {/* Background decoration */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-green-200/20 to-emerald-200/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-blue-200/20 to-cyan-200/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
+                      <UserGroupIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-extrabold text-gray-900">System Overview</h3>
+                      <p className="text-sm text-gray-500">Real-time user statistics</p>
+                    </div>
                   </div>
-                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
-                    <p className="text-sm text-blue-600 font-medium mb-1">Total Staff</p>
-                    <p className="text-3xl font-bold text-blue-700">{counts.staff.total}</p>
-                    <p className="text-xs text-blue-500 mt-1">{counts.staff.active} active</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
-                    <p className="text-sm text-green-600 font-medium mb-1">Total Residents</p>
-                    <p className="text-3xl font-bold text-green-700">{counts.resident.total}</p>
-                    <p className="text-xs text-green-500 mt-1">{counts.resident.active} active</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="group relative bg-gradient-to-br from-red-50 via-pink-50 to-rose-50 rounded-2xl p-6 border-2 border-red-200/50 hover:border-red-300 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-200/30 to-pink-200/30 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <ShieldCheckIcon className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold border border-red-200">
+                            Admin
+                          </div>
+                        </div>
+                        <p className="text-sm text-red-600 font-semibold mb-2 uppercase tracking-wide">Total Administrators</p>
+                        <p className="text-4xl font-extrabold text-red-700 mb-2">{counts.admin.total}</p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                          <p className="text-xs font-medium text-red-600">{counts.admin.active} active users</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="group relative bg-gradient-to-br from-blue-50 via-cyan-50 to-sky-50 rounded-2xl p-6 border-2 border-blue-200/50 hover:border-blue-300 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-200/30 to-cyan-200/30 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <UserGroupIcon className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200">
+                            Staff
+                          </div>
+                        </div>
+                        <p className="text-sm text-blue-600 font-semibold mb-2 uppercase tracking-wide">Total Staff</p>
+                        <p className="text-4xl font-extrabold text-blue-700 mb-2">{counts.staff.total}</p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                          <p className="text-xs font-medium text-blue-600">{counts.staff.active} active users</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="group relative bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 rounded-2xl p-6 border-2 border-green-200/50 hover:border-green-300 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-200/30 to-emerald-200/30 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <UserIcon className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold border border-green-200">
+                            Resident
+                          </div>
+                        </div>
+                        <p className="text-sm text-green-600 font-semibold mb-2 uppercase tracking-wide">Total Residents</p>
+                        <p className="text-4xl font-extrabold text-green-700 mb-2">{counts.resident.total}</p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                          <p className="text-xs font-medium text-green-600">{counts.resident.active} active users</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1242,167 +1024,206 @@ const UserManagement = () => {
               <div className="mb-6">
                 <button
                   onClick={handleBackToOverview}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 shadow-sm hover:shadow-md"
+                  className="group relative inline-flex items-center gap-3 px-6 py-3 text-sm font-semibold text-gray-700 bg-white/80 backdrop-blur-sm border-2 border-gray-200 rounded-xl hover:border-gray-300 hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden"
                 >
-                  <ArrowPathIcon className="w-4 h-4 rotate-180" />
-                  Back to Overview
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <ArrowPathIcon className="w-5 h-5 rotate-180 group-hover:-rotate-180 transition-transform duration-500 relative z-10" />
+                  <span className="relative z-10">Back to Overview</span>
                 </button>
               </div>
 
               {selectedRole === 'staff' ? (
                 // Full Staff Management View
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden w-full">
-                <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-white font-semibold text-lg flex items-center gap-2">
-                      <UserGroupIcon className="w-5 h-5" />
-                        Staff Members ({currentCounts.total})
-                    </h3>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={fetchAllUsers}
-                        className="bg-blue-500/20 hover:bg-blue-500/30 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 backdrop-blur-sm border border-blue-500/30"
-                      >
-                        <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                        Refresh
-                      </button>
-                      <button
+                <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-white/50 overflow-hidden w-full">
+                  <div className="relative bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-8 py-6 overflow-hidden">
+                    {/* Animated background pattern */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,.1)_50%,transparent_75%,transparent_100%)] bg-[length:20px_20px]"></div>
+                    </div>
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                    
+                    <div className="relative z-10 flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 shadow-lg">
+                          <UserGroupIcon className="w-7 h-7 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-extrabold text-2xl flex items-center gap-3">
+                            Staff Members
+                            <span className="px-4 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-bold border border-white/30">
+                              {currentCounts.total}
+                            </span>
+                          </h3>
+                          <p className="text-emerald-100 text-sm mt-1">Manage staff accounts and permissions</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={fetchAllUsers}
+                          className="group relative bg-blue-500/30 hover:bg-blue-500/40 text-white px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-2 backdrop-blur-sm border-2 border-blue-400/50 hover:border-blue-300 shadow-lg hover:shadow-xl overflow-hidden"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          <ArrowPathIcon className={`w-5 h-5 relative z-10 ${loading ? 'animate-spin' : 'group-hover:rotate-180'} transition-transform duration-500`} />
+                          <span className="relative z-10">Refresh</span>
+                        </button>
+                        <button
                           onClick={() => setShowStaffModal(true)}
-                        className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 backdrop-blur-sm border border-white/30"
-                      >
-                        <PlusIcon className="w-4 h-4" />
-                          Create Staff Account
-                      </button>
+                          className="group relative bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-2 backdrop-blur-sm border-2 border-white/30 hover:border-white/50 shadow-lg hover:shadow-xl overflow-hidden"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          <PlusIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                          <span className="relative z-10">Create Staff Account</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-
+                  
                   <div className="overflow-x-auto w-full">
                     <table className="w-full text-sm min-w-full">
-                      <thead className="bg-gradient-to-r from-slate-50 via-blue-50 to-indigo-50 border-b-2 border-slate-200">
+                      <thead className="bg-gradient-to-r from-slate-50 via-blue-50/50 to-indigo-50/50 border-b-2 border-slate-200/50 backdrop-blur-sm">
                         <tr>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[200px]">
+                          <th className="px-6 py-5 text-left font-extrabold text-slate-700 text-xs uppercase tracking-wider min-w-[200px]">
                             <div className="flex items-center gap-2">
-                              <UserGroupIcon className="w-4 h-4 text-slate-500" />
-                              Name
+                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                                <UserGroupIcon className="w-4 h-4 text-white" />
+                              </div>
+                              <span>Name</span>
                             </div>
                           </th>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[220px]">
+                          <th className="px-6 py-5 text-left font-extrabold text-slate-700 text-xs uppercase tracking-wider min-w-[220px]">
                             <div className="flex items-center gap-2">
-                              <PencilIcon className="w-4 h-4 text-slate-500" />
-                              Email
+                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-md">
+                                <PencilIcon className="w-4 h-4 text-white" />
+                              </div>
+                              <span>Email</span>
                             </div>
                           </th>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[180px]">
+                          <th className="px-6 py-5 text-left font-extrabold text-slate-700 text-xs uppercase tracking-wider min-w-[180px]">
                             <div className="flex items-center gap-2">
-                              <UserGroupIcon className="w-4 h-4 text-slate-500" />
-                              Department
+                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
+                                <UserGroupIcon className="w-4 h-4 text-white" />
+                              </div>
+                              <span>Department</span>
                             </div>
                           </th>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[150px]">
+                          <th className="px-6 py-5 text-left font-extrabold text-slate-700 text-xs uppercase tracking-wider min-w-[150px]">
                             <div className="flex items-center gap-2">
-                              <PencilIcon className="w-4 h-4 text-slate-500" />
-                              Position
+                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
+                                <PencilIcon className="w-4 h-4 text-white" />
+                              </div>
+                              <span>Position</span>
                             </div>
                           </th>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[120px]">
+                          <th className="px-6 py-5 text-left font-extrabold text-slate-700 text-xs uppercase tracking-wider min-w-[120px]">
                             <div className="flex items-center gap-2">
-                              <CheckIcon className="w-4 h-4 text-slate-500" />
-                              Status
+                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-md">
+                                <CheckIcon className="w-4 h-4 text-white" />
+                              </div>
+                              <span>Status</span>
                             </div>
                           </th>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[180px]">
+                          <th className="px-6 py-5 text-left font-extrabold text-slate-700 text-xs uppercase tracking-wider min-w-[180px]">
                             <div className="flex items-center gap-2">
-                              <PencilIcon className="w-4 h-4 text-slate-500" />
-                              Actions
+                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-md">
+                                <PencilIcon className="w-4 h-4 text-white" />
+                              </div>
+                              <span>Actions</span>
                             </div>
                           </th>
-                      </tr>
-                    </thead>
+                        </tr>
+                      </thead>
 
-                      <tbody className="divide-y divide-slate-200">
-                      {loading ? (
-                        <tr>
-                            <td colSpan="6" className="px-6 py-16 text-center">
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
-                                  <UserGroupIcon className="w-10 h-10 text-slate-400" />
+                      <tbody className="divide-y divide-slate-100/50">
+                        {loading ? (
+                          <tr>
+                            <td colSpan="6" className="px-6 py-20 text-center">
+                              <div className="flex flex-col items-center gap-5">
+                                <div className="relative w-24 h-24">
+                                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full animate-pulse"></div>
+                                  <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+                                    <UserGroupIcon className="w-12 h-12 text-blue-500 animate-pulse" />
+                                  </div>
                                 </div>
                                 <div className="text-center">
-                                  <h3 className="text-lg font-semibold text-slate-600 mb-2">Loading Staff Data</h3>
+                                  <h3 className="text-xl font-bold text-slate-700 mb-2">Loading Staff Data</h3>
                                   <p className="text-slate-500 text-sm">Please wait while we fetch the staff information...</p>
                                 </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : currentUsers.length === 0 ? (
-                        <tr>
-                            <td colSpan="6" className="px-6 py-16 text-center">
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
-                                  <UserGroupIcon className="w-10 h-10 text-slate-400" />
+                              </div>
+                            </td>
+                          </tr>
+                        ) : currentUsers.length === 0 ? (
+                          <tr>
+                            <td colSpan="6" className="px-6 py-20 text-center">
+                              <div className="flex flex-col items-center gap-5">
+                                <div className="relative w-24 h-24">
+                                  <div className="absolute inset-0 bg-gradient-to-br from-slate-300 to-slate-400 rounded-full"></div>
+                                  <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+                                    <UserGroupIcon className="w-12 h-12 text-slate-400" />
+                                  </div>
                                 </div>
                                 <div className="text-center">
-                                  <h3 className="text-lg font-semibold text-slate-600 mb-2">No Staff Members Found</h3>
+                                  <h3 className="text-xl font-bold text-slate-700 mb-2">No Staff Members Found</h3>
                                   <p className="text-slate-500 text-sm max-w-md">
                                     No staff members have been added yet. Create the first staff account to get started.
                                   </p>
                                 </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                          currentUsers.map((member) => (
-                            <tr 
-                              key={member.id} 
-                              className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 group border-b border-slate-100"
-                            >
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center">
-                                    <span className="text-lg font-semibold text-green-800">
-                                      {member.name[0].toUpperCase()}
-                                    </span>
-                                </div>
-                                  <div>
-                                    <div className="font-semibold text-slate-900 text-sm">{member.name}</div>
-                                    <div className="text-xs text-slate-500">{member.role}</div>
-                                  </div>
                               </div>
                             </td>
-                              <td className="px-6 py-4">
-                                <div className="text-slate-700 text-sm font-medium">{member.email}</div>
+                          </tr>
+                        ) : (
+                          currentUsers.map((member, index) => (
+                            <tr 
+                              key={member.id} 
+                              className="group hover:bg-gradient-to-r hover:from-blue-50/80 hover:via-indigo-50/80 hover:to-purple-50/80 transition-all duration-300 border-b border-slate-100/50 hover:border-blue-200 hover:shadow-md"
+                              style={{ animationDelay: `${index * 50}ms` }}
+                            >
+                              <td className="px-6 py-5">
+                                <div className="flex items-center gap-4">
+                                  <div className="relative w-12 h-12 bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-white/30 to-transparent rounded-2xl"></div>
+                                    <span className="text-lg font-extrabold text-white relative z-10">
+                                      {member.name[0].toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <div className="font-bold text-slate-900 text-base group-hover:text-blue-700 transition-colors">{member.name}</div>
+                                    <div className="text-xs text-slate-500 font-medium">{member.role}</div>
+                                  </div>
+                                </div>
                               </td>
-                              <td className="px-6 py-4">
-                                <span className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold border border-blue-200">
+                              <td className="px-6 py-5">
+                                <div className="text-slate-700 text-sm font-semibold group-hover:text-blue-700 transition-colors">{member.email}</div>
+                              </td>
+                              <td className="px-6 py-5">
+                                <span className="inline-flex items-center bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 text-blue-700 px-4 py-2 rounded-xl text-xs font-bold border-2 border-blue-200/50 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
                                   {member.department}
                                 </span>
                               </td>
-                              <td className="px-6 py-4">
-                                <span className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1.5 rounded-full text-xs font-semibold border border-purple-200">
+                              <td className="px-6 py-5">
+                                <span className="inline-flex items-center bg-gradient-to-r from-purple-100 via-pink-100 to-rose-100 text-purple-700 px-4 py-2 rounded-xl text-xs font-bold border-2 border-purple-200/50 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
                                   {member.position}
                                 </span>
                               </td>
-                              <td className="px-6 py-4">
-                                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                              <td className="px-6 py-5">
+                                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border-2 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 ${
                                   member.active 
-                                    ? 'bg-green-100 text-green-800 border-green-200' 
-                                    : 'bg-red-100 text-red-800 border-red-200'
+                                    ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-300/50' 
+                                    : 'bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border-red-300/50'
                                 }`}>
                                   {member.active ? (
                                     <>
-                                      <CheckIcon className="w-4 h-4" />
-                                      Active
+                                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                      <span>Active</span>
                                     </>
                                   ) : (
                                     <>
-                                      <XMarkIcon className="w-4 h-4" />
-                                      Inactive
+                                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                      <span>Inactive</span>
                                     </>
                                   )}
                                 </span>
                               </td>
-                            <td className="px-6 py-4">
+                              <td className="px-6 py-5">
                                 <div className="flex flex-wrap gap-2">
                                   {canEditStaff && (
                                     <button
@@ -1467,10 +1288,11 @@ const UserManagement = () => {
                                         });
                                         setShowPermissionsModal(true);
                                       }}
-                                      className="text-green-600 hover:text-green-800 cursor-pointer p-2 rounded-lg hover:bg-green-50 transition-all duration-300 transform hover:scale-110"
+                                      className="group relative text-green-700 hover:text-white cursor-pointer p-3 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-500 hover:to-emerald-600 border-2 border-green-200 hover:border-green-500 transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-md hover:shadow-xl overflow-hidden"
                                       title="Edit Permissions"
                                     >
-                                      <PencilIcon className="w-5 h-5" />
+                                      <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                      <PencilIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
                                     </button>
                                   )}
                                   
@@ -1482,25 +1304,27 @@ const UserManagement = () => {
                                           autoClose: 3000
                                         });
                                       }}
-                                      className="text-blue-600 hover:text-blue-800 cursor-pointer p-2 rounded-lg hover:bg-blue-50 transition-all duration-300 transform hover:scale-110"
+                                      className="group relative text-blue-700 hover:text-white cursor-pointer p-3 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 hover:from-blue-500 hover:to-cyan-600 border-2 border-blue-200 hover:border-blue-500 transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-md hover:shadow-xl overflow-hidden"
                                       title="View Details"
                                     >
-                                      <EyeIcon className="w-5 h-5" />
+                                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                      <EyeIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
                                     </button>
                                   )}
                                   
                                   {canDisableStaff && (
                                     <button
                                       onClick={() => handleDeactivate(member.id)}
-                                      className="text-red-600 hover:text-red-800 cursor-pointer p-2 rounded-lg hover:bg-red-50 transition-all duration-300 transform hover:scale-110"
+                                      className="group relative text-red-700 hover:text-white cursor-pointer p-3 rounded-xl bg-gradient-to-br from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-600 border-2 border-red-200 hover:border-red-500 transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-md hover:shadow-xl overflow-hidden"
                                       title="Deactivate Staff"
                                     >
-                                      <XMarkIcon className="w-5 h-5" />
+                                      <div className="absolute inset-0 bg-gradient-to-r from-red-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                      <XMarkIcon className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
                                     </button>
                                   )}
                                   
                                   {!canEditStaff && !canViewStaff && !canDisableStaff && (
-                                    <span className="text-xs text-gray-400 italic">No actions available</span>
+                                    <span className="text-xs text-gray-400 italic px-3 py-2">No actions available</span>
                                   )}
                                 </div>
                               </td>
@@ -1511,14 +1335,14 @@ const UserManagement = () => {
                     </table>
                   </div>
                 </div>
-              ) : selectedRole === 'admin' ? (
-                // Full Admin Management View
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden w-full">
-                  <div className="bg-gradient-to-r from-red-600 to-pink-600 px-6 py-4">
+              ) : (
+                // Simple table for Admin and Resident roles
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                  <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
                     <div className="flex justify-between items-center">
                       <h3 className="text-white font-semibold text-lg flex items-center gap-2">
-                        <ShieldCheckIcon className="w-5 h-5" />
-                        Administrators ({currentCounts.total})
+                        <UserGroupIcon className="w-5 h-5" />
+                        {selectedRole === 'admin' ? 'Administrators' : 'Residents'} ({currentCounts.total})
                       </h3>
                       <div className="flex gap-2">
                         <button
@@ -1529,154 +1353,74 @@ const UserManagement = () => {
                           Refresh
                         </button>
                         <button
-                          onClick={() => setShowAdminModal(true)}
                           className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 backdrop-blur-sm border border-white/30"
                         >
                           <PlusIcon className="w-4 h-4" />
-                          Create Admin Account
+                          Create {selectedRole === 'admin' ? 'Admin' : 'Resident'}
                         </button>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="overflow-x-auto w-full">
-                    <table className="w-full text-sm min-w-full">
-                      <thead className="bg-gradient-to-r from-slate-50 via-red-50 to-pink-50 border-b-2 border-slate-200">
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[200px]">
-                            <div className="flex items-center gap-2">
-                              <ShieldCheckIcon className="w-4 h-4 text-slate-500" />
-                              Name
-                            </div>
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[220px]">
-                            <div className="flex items-center gap-2">
-                              <PencilIcon className="w-4 h-4 text-slate-500" />
-                              Email
-                            </div>
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[120px]">
-                            <div className="flex items-center gap-2">
-                              <CheckIcon className="w-4 h-4 text-slate-500" />
-                              Status
-                            </div>
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[180px]">
-                            <div className="flex items-center gap-2">
-                              <PencilIcon className="w-4 h-4 text-slate-500" />
-                              Actions
-                            </div>
-                          </th>
+                          <th className="px-6 py-4 text-left font-bold text-gray-700 text-sm uppercase tracking-wider">Name</th>
+                          <th className="px-6 py-4 text-left font-bold text-gray-700 text-sm uppercase tracking-wider">Email</th>
+                          <th className="px-6 py-4 text-left font-bold text-gray-700 text-sm uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-4 text-left font-bold text-gray-700 text-sm uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
-
-                      <tbody className="divide-y divide-slate-200">
+                      <tbody className="divide-y divide-gray-200">
                         {loading ? (
                           <tr>
-                            <td colSpan="4" className="px-6 py-16 text-center">
+                            <td colSpan="4" className="px-6 py-12 text-center">
                               <div className="flex flex-col items-center gap-4">
-                                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
-                                  <ShieldCheckIcon className="w-10 h-10 text-slate-400" />
-                                </div>
-                                <div className="text-center">
-                                  <h3 className="text-lg font-semibold text-slate-600 mb-2">Loading Admin Data</h3>
-                                  <p className="text-slate-500 text-sm">Please wait while we fetch the administrator information...</p>
-                                </div>
+                                <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                                <p className="text-gray-600">Loading users...</p>
                               </div>
                             </td>
                           </tr>
                         ) : currentUsers.length === 0 ? (
                           <tr>
-                            <td colSpan="4" className="px-6 py-16 text-center">
+                            <td colSpan="4" className="px-6 py-12 text-center">
                               <div className="flex flex-col items-center gap-4">
-                                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
-                                  <ShieldCheckIcon className="w-10 h-10 text-slate-400" />
-                                </div>
-                                <div className="text-center">
-                                  <h3 className="text-lg font-semibold text-slate-600 mb-2">No Administrators Found</h3>
-                                  <p className="text-slate-500 text-sm max-w-md">
-                                    No administrators have been added yet. Create the first admin account to get started.
-                                  </p>
-                                </div>
+                                <UserGroupIcon className="w-16 h-16 text-gray-300" />
+                                <p className="text-gray-600 font-semibold">No {selectedRole === 'admin' ? 'administrators' : 'residents'} found</p>
                               </div>
                             </td>
                           </tr>
                         ) : (
-                          currentUsers.map((admin) => (
-                            <tr 
-                              key={admin.id} 
-                              className="hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 transition-all duration-300 group border-b border-slate-100"
-                            >
+                          currentUsers.map((user) => (
+                            <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                               <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 bg-gradient-to-br from-red-100 to-pink-100 rounded-full flex items-center justify-center">
-                                    <span className="text-lg font-semibold text-red-800">
-                                      {admin.name?.[0]?.toUpperCase() || 'A'}
-                                    </span>
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold">
+                                    {user.name?.charAt(0).toUpperCase() || 'U'}
                                   </div>
-                                  <div>
-                                    <div className="font-semibold text-slate-900 text-sm">{admin.name}</div>
-                                    <div className="text-xs text-slate-500">{admin.role || 'admin'}</div>
-                                  </div>
+                                  <span className="font-medium text-gray-900">{user.name || user.full_name || 'N/A'}</span>
                                 </div>
                               </td>
+                              <td className="px-6 py-4 text-gray-700">{user.email || 'N/A'}</td>
                               <td className="px-6 py-4">
-                                <div className="text-slate-700 text-sm font-medium">{admin.email}</div>
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                  user.active !== false && user.status !== 'disabled'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {user.active !== false && user.status !== 'disabled' ? 'Active' : 'Inactive'}
+                                </span>
                               </td>
                               <td className="px-6 py-4">
-                                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                                  admin.active !== false && admin.status !== 'disabled'
-                                    ? 'bg-green-100 text-green-800 border-green-200' 
-                                    : 'bg-red-100 text-red-800 border-red-200'
-                                }`}>
-                                  {admin.active !== false && admin.status !== 'disabled' ? (
-                                    <>
-                                      <CheckIcon className="w-4 h-4" />
-                                      Active
-                                    </>
-                                  ) : (
-                                    <>
-                                      <XMarkIcon className="w-4 h-4" />
-                                      Inactive
-                                    </>
-                                  )}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                                <div className="flex flex-wrap gap-2">
-                                  <button
-                                    onClick={() => {
-                                      toast.info(`View details for ${admin.name}`, {
-                                        position: "top-right",
-                                        autoClose: 3000
-                                      });
-                                    }}
-                                    className="text-blue-600 hover:text-blue-800 cursor-pointer p-2 rounded-lg hover:bg-blue-50 transition-all duration-300 transform hover:scale-110"
-                                    title="View Details"
-                                  >
+                                <div className="flex gap-2">
+                                  <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View">
                                     <EyeIcon className="w-5 h-5" />
                                   </button>
-                                  <button
-                                    onClick={() => {
-                                      setEditingAdmin(admin);
-                                      setAdminFormData({
-                                        name: admin.name,
-                                        email: admin.email,
-                                        password: '',
-                                        role: 'admin'
-                                      });
-                                      setShowAdminModal(true);
-                                    }}
-                                    className="text-gray-600 hover:text-gray-800 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-all duration-300 transform hover:scale-110"
-                                    title="Edit Admin"
-                                  >
+                                  <button className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors" title="Edit">
                                     <PencilIcon className="w-5 h-5" />
                                   </button>
-                                  <button
-                                    onClick={() => handleDeleteAdmin(admin.id)}
-                                    className="text-red-600 hover:text-red-800 cursor-pointer p-2 rounded-lg hover:bg-red-50 transition-all duration-300 transform hover:scale-110"
-                                    title="Delete Admin"
-                                  >
+                                  <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
                                     <XMarkIcon className="w-5 h-5" />
                                   </button>
                                 </div>
@@ -1688,199 +1432,6 @@ const UserManagement = () => {
                     </table>
                   </div>
                 </div>
-              ) : (
-                // Full Resident Management View
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden w-full">
-                  <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-white font-semibold text-lg flex items-center gap-2">
-                        <UserIcon className="w-5 h-5" />
-                        Residents ({currentCounts.total})
-                      </h3>
-                              <div className="flex gap-2">
-                        <button
-                          onClick={fetchAllUsers}
-                          className="bg-blue-500/20 hover:bg-blue-500/30 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 backdrop-blur-sm border border-blue-500/30"
-                        >
-                          <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                          Refresh
-                        </button>
-                        <button
-                          onClick={() => setShowResidentModal(true)}
-                          className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 backdrop-blur-sm border border-white/30"
-                        >
-                          <PlusIcon className="w-4 h-4" />
-                          Create Resident Account
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="overflow-x-auto w-full">
-                    <table className="w-full text-sm min-w-full">
-                      <thead className="bg-gradient-to-r from-slate-50 via-green-50 to-emerald-50 border-b-2 border-slate-200">
-                        <tr>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[200px]">
-                            <div className="flex items-center gap-2">
-                              <UserIcon className="w-4 h-4 text-slate-500" />
-                              Name
-                            </div>
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[220px]">
-                            <div className="flex items-center gap-2">
-                              <PencilIcon className="w-4 h-4 text-slate-500" />
-                              Email
-                            </div>
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[120px]">
-                            <div className="flex items-center gap-2">
-                              <CheckIcon className="w-4 h-4 text-slate-500" />
-                              Status
-                            </div>
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-slate-700 text-sm uppercase tracking-wider min-w-[180px]">
-                            <div className="flex items-center gap-2">
-                              <PencilIcon className="w-4 h-4 text-slate-500" />
-                              Actions
-                            </div>
-                          </th>
-                        </tr>
-                      </thead>
-
-                      <tbody className="divide-y divide-slate-200">
-                        {loading ? (
-                          <tr>
-                            <td colSpan="4" className="px-6 py-16 text-center">
-                              <div className="flex flex-col items-center gap-4">
-                                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
-                                  <UserIcon className="w-10 h-10 text-slate-400" />
-                                </div>
-                                <div className="text-center">
-                                  <h3 className="text-lg font-semibold text-slate-600 mb-2">Loading Resident Data</h3>
-                                  <p className="text-slate-500 text-sm">Please wait while we fetch the resident information...</p>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : currentUsers.length === 0 ? (
-                          <tr>
-                            <td colSpan="4" className="px-6 py-16 text-center">
-                              <div className="flex flex-col items-center gap-4">
-                                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
-                                  <UserIcon className="w-10 h-10 text-slate-400" />
-                                </div>
-                                <div className="text-center">
-                                  <h3 className="text-lg font-semibold text-slate-600 mb-2">No Residents Found</h3>
-                                  <p className="text-slate-500 text-sm max-w-md">
-                                    No residents have been added yet. Create the first resident account to get started.
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : (
-                          currentUsers.map((resident) => (
-                            <tr 
-                              key={resident.id} 
-                              className="hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 group border-b border-slate-100"
-                            >
-                              <td className="px-6 py-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center">
-                                    <span className="text-lg font-semibold text-green-800">
-                                      {resident.name?.[0]?.toUpperCase() || resident.full_name?.[0]?.toUpperCase() || 'R'}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <div className="font-semibold text-slate-900 text-sm">{resident.name || resident.full_name || 'N/A'}</div>
-                                    <div className="text-xs text-slate-500">{resident.role || 'residents'}</div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="text-slate-700 text-sm font-medium">{resident.email || 'N/A'}</div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                                  resident.active !== false && resident.status !== 'disabled'
-                                    ? 'bg-green-100 text-green-800 border-green-200' 
-                                    : 'bg-red-100 text-red-800 border-red-200'
-                                }`}>
-                                  {resident.active !== false && resident.status !== 'disabled' ? (
-                                    <>
-                                      <CheckIcon className="w-4 h-4" />
-                                      Active
-                                    </>
-                                  ) : (
-                                    <>
-                                      <XMarkIcon className="w-4 h-4" />
-                                      Inactive
-                                    </>
-                                  )}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="flex flex-wrap gap-2">
-                                  <button
-                                    onClick={() => {
-                                      toast.info(`View details for ${resident.name || resident.full_name}`, {
-                                        position: "top-right",
-                                        autoClose: 3000
-                                      });
-                                    }}
-                                    className="text-blue-600 hover:text-blue-800 cursor-pointer p-2 rounded-lg hover:bg-blue-50 transition-all duration-300 transform hover:scale-110"
-                                    title="View Details"
-                                  >
-                                  <EyeIcon className="w-5 h-5" />
-                                </button>
-                                  <button
-                                    onClick={() => {
-                                      setEditingResident(resident);
-                                      setResidentFormData({
-                                        name: resident.name || resident.full_name || '',
-                                        email: resident.email || '',
-                                        password: '',
-                                        role: 'residents',
-                                        first_name: '',
-                                        middle_name: '',
-                                        last_name: '',
-                                        name_suffix: '',
-                                        birth_date: '',
-                                        birth_place: '',
-                                        age: '',
-                                        nationality: '',
-                                        mobile_number: '',
-                                        sex: '',
-                                        civil_status: '',
-                                        religion: '',
-                                        current_address: '',
-                                        years_in_barangay: '',
-                                        voter_status: '',
-                                        household_no: ''
-                                      });
-                                      setShowResidentModal(true);
-                                    }}
-                                    className="text-gray-600 hover:text-gray-800 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-all duration-300 transform hover:scale-110"
-                                    title="Edit Resident"
-                                  >
-                                  <PencilIcon className="w-5 h-5" />
-                                </button>
-                                  <button
-                                    onClick={() => handleDeleteResident(resident.id)}
-                                    className="text-red-600 hover:text-red-800 cursor-pointer p-2 rounded-lg hover:bg-red-50 transition-all duration-300 transform hover:scale-110"
-                                    title="Delete Resident"
-                                  >
-                                  <XMarkIcon className="w-5 h-5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
               )}
             </>
           )}
@@ -2627,479 +2178,6 @@ const UserManagement = () => {
                 resendButtonText="Resend Code"
                 className="w-full"
               />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create/Edit Admin Modal */}
-      {showAdminModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all overflow-hidden">
-            <div className="bg-gradient-to-r from-red-600 to-pink-600 px-8 py-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-3xl font-bold text-white">{editingAdmin ? 'Edit Admin Account' : 'Create Admin Account'}</h2>
-                  <p className="mt-2 text-red-100">Add a new administrator to the system</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowAdminModal(false);
-                    setEditingAdmin(null);
-                    setAdminFormData({ name: '', email: '', password: '', role: 'admin' });
-                  }}
-                  className="text-red-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2 rounded-full p-2 transition-colors"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-
-            <div className="px-8 py-6">
-              <form onSubmit={(e) => { e.preventDefault(); setShowAdminConfirmModal(true); }} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={adminFormData.name}
-                      onChange={handleAdminInputChange}
-                      className={`w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 shadow-sm transition-colors
-                        ${adminFormErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
-                      placeholder="Enter full name"
-                    />
-                    {adminFormErrors.name && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <XMarkIcon className="h-4 w-4" />
-                        {adminFormErrors.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={adminFormData.email}
-                      onChange={handleAdminInputChange}
-                      className={`w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 shadow-sm transition-colors
-                        ${adminFormErrors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
-                      placeholder="Enter email address"
-                    />
-                    {adminFormErrors.email && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <XMarkIcon className="h-4 w-4" />
-                        {adminFormErrors.email}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-                    <div className="relative">
-                      <input
-                        type={showAdminPassword ? "text" : "password"}
-                        name="password"
-                        value={adminFormData.password}
-                        onChange={handleAdminInputChange}
-                        className={`w-full rounded-xl border px-4 py-3 pr-12 focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 shadow-sm transition-colors
-                          ${adminFormErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
-                        placeholder={editingAdmin ? "Leave blank to keep current password" : "Enter password"}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowAdminPassword(!showAdminPassword)}
-                        className="absolute inset-y-0 right-0 flex items-center pr-4"
-                      >
-                        {showAdminPassword ? (
-                          <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                        ) : (
-                          <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                        )}
-                      </button>
-                    </div>
-                    {adminFormData.password && (
-                      <div className="mt-2">
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((level) => (
-                            <div
-                              key={level}
-                              className={`h-2 flex-1 rounded-full transition-colors ${
-                                level <= adminPasswordStrength
-                                  ? adminPasswordStrength <= 2
-                                    ? 'bg-red-400'
-                                    : adminPasswordStrength <= 3
-                                    ? 'bg-yellow-400'
-                                    : 'bg-green-400'
-                                  : 'bg-gray-200'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-                        let password = '';
-                        for (let i = 0; i < 12; i++) {
-                          password += chars.charAt(Math.floor(Math.random() * chars.length));
-                        }
-                        setAdminFormData(prev => ({ ...prev, password }));
-                        setAdminPasswordStrength(calculatePasswordStrength(password));
-                      }}
-                      className="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Generate random password
-                    </button>
-                    {adminFormErrors.password && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <XMarkIcon className="h-4 w-4" />
-                        {adminFormErrors.password}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAdminModal(false);
-                      setEditingAdmin(null);
-                      setAdminFormData({ name: '', email: '', password: '', role: 'admin' });
-                    }}
-                    className="px-6 py-3 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-pink-600 rounded-xl hover:from-red-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all transform hover:scale-105 shadow-lg"
-                  >
-                    {editingAdmin ? 'Update Admin Account' : 'Create Admin Account'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Admin Confirmation Modal */}
-      {showAdminConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] px-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
-            <div className="p-8 text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ShieldCheckIcon className="w-8 h-8 text-red-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Confirm Admin Account {editingAdmin ? 'Update' : 'Creation'}</h3>
-              <p className="text-gray-600 mb-6">Are you sure you want to {editingAdmin ? 'update' : 'create'} this admin account for <strong>{adminFormData.name}</strong>?</p>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => setShowAdminConfirmModal(false)}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAdminConfirmSubmit}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-                >
-                  {editingAdmin ? 'Update Account' : 'Create Account'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create/Edit Resident Modal */}
-      {showResidentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl transform transition-all overflow-hidden max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-8 py-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-3xl font-bold text-white">{editingResident ? 'Edit Resident Account' : 'Create Resident Account'}</h2>
-                  <p className="mt-2 text-green-100">Add a new resident to the system</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowResidentModal(false);
-                    setEditingResident(null);
-                    setResidentFormData({
-                      name: '',
-                      email: '',
-                      password: '',
-                      role: 'residents',
-                      first_name: '',
-                      middle_name: '',
-                      last_name: '',
-                      name_suffix: '',
-                      birth_date: '',
-                      birth_place: '',
-                      age: '',
-                      nationality: '',
-                      mobile_number: '',
-                      sex: '',
-                      civil_status: '',
-                      religion: '',
-                      current_address: '',
-                      years_in_barangay: '',
-                      voter_status: '',
-                      household_no: ''
-                    });
-                  }}
-                  className="text-green-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 rounded-full p-2 transition-colors"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-
-            <div className="px-8 py-6">
-              <form onSubmit={(e) => { e.preventDefault(); setShowResidentConfirmModal(true); }} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={residentFormData.name}
-                      onChange={handleResidentInputChange}
-                      className={`w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 shadow-sm transition-colors
-                        ${residentFormErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
-                      placeholder="Enter full name"
-                    />
-                    {residentFormErrors.name && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <XMarkIcon className="h-4 w-4" />
-                        {residentFormErrors.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={residentFormData.email}
-                      onChange={handleResidentInputChange}
-                      className={`w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 shadow-sm transition-colors
-                        ${residentFormErrors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
-                      placeholder="Enter email address"
-                    />
-                    {residentFormErrors.email && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <XMarkIcon className="h-4 w-4" />
-                        {residentFormErrors.email}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-                    <div className="relative">
-                      <input
-                        type={showResidentPassword ? "text" : "password"}
-                        name="password"
-                        value={residentFormData.password}
-                        onChange={handleResidentInputChange}
-                        className={`w-full rounded-xl border px-4 py-3 pr-12 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 shadow-sm transition-colors
-                          ${residentFormErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
-                        placeholder="Enter password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowResidentPassword(!showResidentPassword)}
-                        className="absolute inset-y-0 right-0 flex items-center pr-4"
-                      >
-                        {showResidentPassword ? (
-                          <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                        ) : (
-                          <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                        )}
-                      </button>
-                    </div>
-                    {residentFormErrors.password && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <XMarkIcon className="h-4 w-4" />
-                        {residentFormErrors.password}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
-                    <input
-                      type="text"
-                      name="first_name"
-                      value={residentFormData.first_name}
-                      onChange={handleResidentInputChange}
-                      className={`w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 shadow-sm transition-colors
-                        ${residentFormErrors.first_name ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
-                      placeholder="Enter first name"
-                    />
-                    {residentFormErrors.first_name && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <XMarkIcon className="h-4 w-4" />
-                        {residentFormErrors.first_name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
-                    <input
-                      type="text"
-                      name="last_name"
-                      value={residentFormData.last_name}
-                      onChange={handleResidentInputChange}
-                      className={`w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 shadow-sm transition-colors
-                        ${residentFormErrors.last_name ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
-                      placeholder="Enter last name"
-                    />
-                    {residentFormErrors.last_name && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <XMarkIcon className="h-4 w-4" />
-                        {residentFormErrors.last_name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Birth Date</label>
-                    <input
-                      type="date"
-                      name="birth_date"
-                      value={residentFormData.birth_date}
-                      onChange={handleResidentInputChange}
-                      className={`w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 shadow-sm transition-colors
-                        ${residentFormErrors.birth_date ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
-                    />
-                    {residentFormErrors.birth_date && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <XMarkIcon className="h-4 w-4" />
-                        {residentFormErrors.birth_date}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Mobile Number</label>
-                    <input
-                      type="text"
-                      name="mobile_number"
-                      value={residentFormData.mobile_number}
-                      onChange={handleResidentInputChange}
-                      className={`w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 shadow-sm transition-colors
-                        ${residentFormErrors.mobile_number ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
-                      placeholder="Enter mobile number"
-                    />
-                    {residentFormErrors.mobile_number && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <XMarkIcon className="h-4 w-4" />
-                        {residentFormErrors.mobile_number}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Current Address</label>
-                    <textarea
-                      name="current_address"
-                      value={residentFormData.current_address}
-                      onChange={handleResidentInputChange}
-                      rows="3"
-                      className={`w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 shadow-sm transition-colors resize-none
-                        ${residentFormErrors.current_address ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
-                      placeholder="Enter complete address"
-                    />
-                    {residentFormErrors.current_address && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <XMarkIcon className="h-4 w-4" />
-                        {residentFormErrors.current_address}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowResidentModal(false);
-                      setEditingResident(null);
-                      setResidentFormData({
-                        name: '',
-                        email: '',
-                        password: '',
-                        role: 'residents',
-                        first_name: '',
-                        middle_name: '',
-                        last_name: '',
-                        name_suffix: '',
-                        birth_date: '',
-                        birth_place: '',
-                        age: '',
-                        nationality: '',
-                        mobile_number: '',
-                        sex: '',
-                        civil_status: '',
-                        religion: '',
-                        current_address: '',
-                        years_in_barangay: '',
-                        voter_status: '',
-                        household_no: ''
-                      });
-                    }}
-                    className="px-6 py-3 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-xl hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all transform hover:scale-105 shadow-lg"
-                  >
-                    {editingResident ? 'Update Resident Account' : 'Create Resident Account'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Resident Confirmation Modal */}
-      {showResidentConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] px-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
-            <div className="p-8 text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <UserIcon className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Confirm Resident Account {editingResident ? 'Update' : 'Creation'}</h3>
-              <p className="text-gray-600 mb-6">Are you sure you want to {editingResident ? 'update' : 'create'} this resident account for <strong>{residentFormData.name}</strong>?</p>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => setShowResidentConfirmModal(false)}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleResidentConfirmSubmit}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  {editingResident ? 'Update Account' : 'Create Account'}
-                </button>
-              </div>
             </div>
           </div>
         </div>
