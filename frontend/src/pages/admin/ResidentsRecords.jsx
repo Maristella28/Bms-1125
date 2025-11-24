@@ -563,7 +563,7 @@ function exportToExcel(data, filename = 'residents-demographic-report') {
 
     // Define styles
     const titleStyle = {
-      font: { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } },
+      font: { name: 'Calibri', size: 18, bold: true, color: { argb: 'FFFFFFFF' } },
       fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } },
       alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
       border: {
@@ -616,10 +616,16 @@ function exportToExcel(data, filename = 'residents-demographic-report') {
 
     let currentRow = 1;
 
+    // Add empty row for top spacing
+    worksheet.addRow([]);
+    currentRow++;
+
     // Title and Header
     const titleRow = worksheet.addRow(['BARANGAY DEMOGRAPHIC INFORMATION REPORT']);
     titleRow.getCell(1).style = titleStyle;
     worksheet.mergeCells(currentRow, 1, currentRow, 4);
+    // Set explicit row height for title row with extra padding
+    titleRow.height = 50;
     currentRow++;
 
     const dateRow = worksheet.addRow(['Generated on:', new Date().toLocaleDateString()]);
@@ -793,11 +799,10 @@ function exportToExcel(data, filename = 'residents-demographic-report') {
       { width: 18 }   // Column Q - Last Modified
     ];
 
-    // Set row heights for headers
-    worksheet.getRow(1).height = 25; // Title
-    worksheet.getRow(5).height = 22; // Section I header
-    worksheet.getRow(12).height = 22; // Section F header
-    worksheet.getRow(30).height = 22; // Section G header (approximate)
+    // Set row heights for headers (title row height is set above)
+    worksheet.getRow(6).height = 22; // Section I header (adjusted for added empty row)
+    worksheet.getRow(13).height = 22; // Section F header (adjusted for added empty row)
+    worksheet.getRow(31).height = 22; // Section G header (approximate, adjusted)
     const detailedRowIndex = currentRow - items.length - 2;
     worksheet.getRow(detailedRowIndex).height = 22; // Detailed records header
 
