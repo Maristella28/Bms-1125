@@ -28,22 +28,11 @@
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
         }
         .header {
-            background: linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%);
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
             color: white;
             padding: 48px 40px 40px;
             text-align: center;
             position: relative;
-            overflow: hidden;
-        }
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-            pointer-events: none;
         }
         .header-content {
             position: relative;
@@ -91,36 +80,22 @@
         .greeting strong {
             color: #059669;
             font-weight: 700;
-            position: relative;
         }
         .success-banner {
-            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            background: #ecfdf5;
             border: 1px solid #10b981;
-            border-left: 5px solid #10b981;
-            padding: 24px 28px;
-            border-radius: 14px;
+            border-left: 4px solid #10b981;
+            padding: 20px 24px;
+            border-radius: 12px;
             margin: 28px 0;
             display: flex;
             align-items: flex-start;
-            gap: 18px;
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-        .success-banner::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
-            pointer-events: none;
+            gap: 14px;
         }
         .success-icon {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            width: 48px;
+            height: 48px;
+            background: #10b981;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -128,19 +103,14 @@
             flex-shrink: 0;
             color: white;
             font-weight: 700;
-            font-size: 28px;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35), 0 0 0 3px rgba(16, 185, 129, 0.1);
+            font-size: 26px;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
             line-height: 1;
-            position: relative;
-            border: 2px solid rgba(255, 255, 255, 0.2);
         }
-        .success-icon::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), transparent);
-            opacity: 0.5;
+        .success-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
         }
         .success-banner-content {
             flex: 1;
@@ -153,23 +123,12 @@
             line-height: 1.6;
         }
         .info-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            background: #f9fafb;
             border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            padding: 32px;
+            border-radius: 12px;
+            padding: 28px;
             margin: 28px 0;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02);
-            position: relative;
-            overflow: hidden;
-        }
-        .info-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #059669 0%, #10b981 100%);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
         .info-card-header {
             display: flex;
@@ -180,30 +139,25 @@
             border-bottom: 2px solid #e5e7eb;
         }
         .info-card-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            background: #059669;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 700;
-            font-size: 24px;
+            font-size: 22px;
             flex-shrink: 0;
             font-style: normal;
+            font-family: Georgia, 'Times New Roman', serif;
             line-height: 1;
-            box-shadow: 0 3px 10px rgba(5, 150, 105, 0.25), 0 0 0 2px rgba(5, 150, 105, 0.1);
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .info-card-icon::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 12px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
-            pointer-events: none;
+        .info-card-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
         }
         .info-card h3 {
             margin: 0;
@@ -216,16 +170,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 0;
+            padding: 14px 0;
             border-bottom: 1px solid #e5e7eb;
-            transition: background-color 0.2s ease;
-        }
-        .info-row:hover {
-            background-color: rgba(5, 150, 105, 0.02);
-            margin: 0 -8px;
-            padding-left: 8px;
-            padding-right: 8px;
-            border-radius: 8px;
         }
         .info-row:last-child {
             border-bottom: none;
@@ -237,42 +183,23 @@
             font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .info-label::before {
-            content: '▸';
-            color: #059669;
-            font-size: 12px;
-            font-weight: 700;
+            display: block;
         }
         .info-value {
-            color: #059669;
+            color: #111827;
             font-weight: 700;
             font-size: 15px;
             text-align: right;
         }
         .ticket-section {
-            background: linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%);
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
             color: white;
-            padding: 40px 36px;
-            border-radius: 16px;
+            padding: 36px 32px;
+            border-radius: 12px;
             text-align: center;
             margin: 32px 0;
-            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 16px rgba(5, 150, 105, 0.25);
             position: relative;
-            overflow: hidden;
-        }
-        .ticket-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
-            pointer-events: none;
         }
         .ticket-label {
             font-size: 12px;
@@ -283,41 +210,24 @@
             font-weight: 600;
         }
         .ticket-value {
-            font-size: 36px;
+            font-size: 34px;
             font-weight: 800;
-            letter-spacing: 4px;
+            letter-spacing: 3px;
             font-family: 'Courier New', 'Monaco', monospace;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 20px 36px;
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 18px 32px;
+            border-radius: 8px;
             display: inline-block;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-            position: relative;
-            z-index: 1;
-            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
         .warning-box {
-            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            background: #fffbeb;
             border: 1px solid #fcd34d;
-            border-left: 5px solid #f59e0b;
-            padding: 24px 28px;
-            border-radius: 14px;
+            border-left: 4px solid #f59e0b;
+            padding: 20px 24px;
+            border-radius: 12px;
             margin: 28px 0;
-            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-        .warning-box::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
-            pointer-events: none;
         }
         .warning-header {
             display: flex;
@@ -326,29 +236,23 @@
             margin-bottom: 10px;
         }
         .warning-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            background: #f59e0b;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
             color: white;
             font-weight: 700;
-            font-size: 24px;
+            font-size: 22px;
             line-height: 1;
-            box-shadow: 0 3px 10px rgba(245, 158, 11, 0.3), 0 0 0 2px rgba(245, 158, 11, 0.1);
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .warning-icon::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 12px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
-            pointer-events: none;
+        .warning-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
         }
         .warning-box strong {
             display: block;
@@ -366,21 +270,9 @@
         }
         .divider {
             height: 1px;
-            background: linear-gradient(90deg, transparent, #e5e7eb 20%, #e5e7eb 80%, transparent);
+            background: #e5e7eb;
             margin: 36px 0;
             border: none;
-            position: relative;
-        }
-        .divider::before {
-            content: '✦';
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 0 12px;
-            color: #9ca3af;
-            font-size: 12px;
         }
         .description-text {
             color: #4b5563;
@@ -396,58 +288,23 @@
         }
         .btn {
             display: inline-block;
-            padding: 16px 36px;
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            padding: 14px 32px;
+            background: #059669;
             color: white !important;
             text-decoration: none;
-            border-radius: 10px;
+            border-radius: 8px;
             font-weight: 700;
             font-size: 15px;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-        .btn:hover::before {
-            left: 100%;
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
         }
         .contact-info {
-            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            background: #f9fafb;
             border: 1px solid #e5e7eb;
-            border-radius: 14px;
-            padding: 36px 28px 28px;
+            border-radius: 12px;
+            padding: 24px;
             margin: 32px 0;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-            position: relative;
-        }
-        .contact-icon {
-            position: absolute;
-            top: -16px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            box-shadow: 0 3px 10px rgba(5, 150, 105, 0.25);
-            border: 3px solid white;
         }
         .contact-info p {
             margin: 0;
@@ -735,7 +592,11 @@
             
             <!-- Success Banner -->
             <div class="success-banner">
-                <div class="success-icon" style="position: relative; z-index: 1;">✓</div>
+                <div class="success-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                </div>
                 <div class="success-banner-content">
                     <p>Congratulations! Your blotter request has been reviewed and approved by our administration team.</p>
                 </div>
@@ -744,7 +605,11 @@
             <!-- Request Information Card -->
             <div class="info-card">
                 <div class="info-card-header">
-                    <div class="info-card-icon" style="position: relative; z-index: 1;">ℹ</div>
+                    <div class="info-card-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                        </svg>
+                    </div>
                     <h3>Request Details</h3>
                 </div>
                 <div class="info-row">
@@ -763,16 +628,18 @@
             
             <!-- Ticket Number Section -->
             <div class="ticket-section">
-                <div style="position: relative; z-index: 1;">
                     <div class="ticket-label">Your Official Ticket Number</div>
                     <div class="ticket-value">{{ $blotterRequest->ticket_number ?? 'N/A' }}</div>
-                </div>
             </div>
             
             <!-- Important Reminder -->
             <div class="warning-box">
                 <div class="warning-header">
-                    <div class="warning-icon" style="position: relative; z-index: 1;">⚠</div>
+                    <div class="warning-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                        </svg>
+                    </div>
                     <strong>Important Reminder</strong>
                 </div>
                 <p>Please keep your ticket number safe and secure. You will need this number when following up on your blotter request, contacting the barangay office, or for any future reference regarding this matter.</p>
@@ -794,7 +661,6 @@
             
             <!-- Contact Information -->
             <div class="contact-info">
-                <div class="contact-icon">💬</div>
                 <p>
                     <strong>Need Assistance?</strong><br>
                     If you have any questions or need further assistance, please don't hesitate to contact the barangay office. 
