@@ -158,16 +158,26 @@ const ActivityLogs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
-    user_id: '',
     action: '',
     model_type: '',
     search: '',
     date_from: '',
     date_to: '',
-    user_type: 'all', // New filter for user type
+    time_from: '',
+    time_to: '',
+    user_type: 'all',
+    ip_address: '',
+    model_id: '',
+    description_search: '',
+    status: '',
+    sort_by: 'created_at',
+    sort_order: 'desc',
     page: 1,
     per_page: 20,
   });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [selectedActions, setSelectedActions] = useState([]);
+  const [selectedModelTypes, setSelectedModelTypes] = useState([]);
   const [filterOptions, setFilterOptions] = useState({
     actions: [],
     model_types: [],
@@ -203,7 +213,7 @@ const ActivityLogs = () => {
     fetchAuditSummary();
     fetchFlaggedResidentsCount();
     fetchInactiveResidents(); // Always fetch inactive residents
-  }, [filters.page, filters.per_page, filters.user_type, filters.action, filters.model_type, filters.search, filters.date_from, filters.date_to]);
+  }, [filters.page, filters.per_page, filters.user_type, filters.action, filters.model_type, filters.search, filters.date_from, filters.date_to, filters.time_from, filters.time_to, filters.ip_address, filters.model_id, filters.description_search, filters.status, filters.sort_by, filters.sort_order]);
 
   useEffect(() => {
     fetchInactiveResidents();
@@ -215,10 +225,15 @@ const ActivityLogs = () => {
       const params = new URLSearchParams();
 
       Object.entries(filters).forEach(([key, value]) => {
-        if (value && value !== '' && value !== 'all') {
+        if (value && value !== '' && value !== 'all' && key !== 'page') {
           params.append(key, value);
         }
       });
+
+      // Add page separately
+      if (filters.page > 1) {
+        params.append('page', filters.page);
+      }
 
       const response = await axios.get(`/admin/activity-logs?${params}`);
       const logsResponse = response.data.logs ?? {};
@@ -336,6 +351,76 @@ const ActivityLogs = () => {
     fetchLogs();
   };
 
+  const clearAllFilters = () => {
+    setFilters({
+      action: '',
+      model_type: '',
+      search: '',
+      date_from: '',
+      date_to: '',
+      time_from: '',
+      time_to: '',
+      user_type: 'all',
+      ip_address: '',
+      model_id: '',
+      description_search: '',
+      status: '',
+      sort_by: 'created_at',
+      sort_order: 'desc',
+      page: 1,
+      per_page: 20,
+    });
+    setSelectedActions([]);
+    setSelectedModelTypes([]);
+    setQuickDateFilter('');
+    fetchLogs();
+  };
+
+  const hasActiveFilters = () => {
+    return filters.action !== '' ||
+           filters.model_type !== '' ||
+           filters.search !== '' ||
+           filters.date_from !== '' ||
+           filters.date_to !== '' ||
+           filters.time_from !== '' ||
+           filters.time_to !== '' ||
+           filters.user_type !== 'all' ||
+           filters.ip_address !== '' ||
+           filters.model_id !== '' ||
+           filters.description_search !== '' ||
+           filters.status !== '' ||
+           selectedActions.length > 0 ||
+           selectedModelTypes.length > 0;
+  };
+
+  const handleActionToggle = (action) => {
+    setSelectedActions(prev => {
+      const newActions = prev.includes(action)
+        ? prev.filter(a => a !== action)
+        : [...prev, action];
+      setFilters(prevFilters => ({
+        ...prevFilters,
+        action: newActions.join(','),
+        page: 1
+      }));
+      return newActions;
+    });
+  };
+
+  const handleModelTypeToggle = (modelType) => {
+    setSelectedModelTypes(prev => {
+      const newTypes = prev.includes(modelType)
+        ? prev.filter(t => t !== modelType)
+        : [...prev, modelType];
+      setFilters(prevFilters => ({
+        ...prevFilters,
+        model_type: newTypes.join(','),
+        page: 1
+      }));
+      return newTypes;
+    });
+  };
+
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -347,13 +432,45 @@ const ActivityLogs = () => {
     const today = new Date();
     let dateFrom = '';
     let dateTo = format(endOfDay(today), 'yyyy-MM-dd');
+    let timeFrom = '';
+    let timeTo = '23:59';
 
     switch (period) {
+      case 'today':
+        dateFrom = format(startOfDay(today), 'yyyy-MM-dd');
+        timeFrom = '00:00';
+        break;
+      case 'yesterday':
+        const yesterday = subDays(today, 1);
+        dateFrom = format(startOfDay(yesterday), 'yyyy-MM-dd');
+        dateTo = format(endOfDay(yesterday), 'yyyy-MM-dd');
+        timeFrom = '00:00';
+        break;
+      case 'last_24_hours':
+        dateFrom = format(startOfDay(subDays(today, 1)), 'yyyy-MM-dd');
+        timeFrom = format(new Date(Date.now() - 24 * 60 * 60 * 1000), 'HH:mm');
+        break;
+      case 'last_7_days':
+        dateFrom = format(startOfDay(subDays(today, 7)), 'yyyy-MM-dd');
+        timeFrom = '00:00';
+        break;
       case 'last_week':
         dateFrom = format(startOfDay(subDays(today, 7)), 'yyyy-MM-dd');
         break;
+      case 'last_30_days':
+        dateFrom = format(startOfDay(subDays(today, 30)), 'yyyy-MM-dd');
+        timeFrom = '00:00';
+        break;
       case 'last_month':
         dateFrom = format(startOfDay(subMonths(today, 1)), 'yyyy-MM-dd');
+        break;
+      case 'last_3_months':
+        dateFrom = format(startOfDay(subMonths(today, 3)), 'yyyy-MM-dd');
+        timeFrom = '00:00';
+        break;
+      case 'last_6_months':
+        dateFrom = format(startOfDay(subMonths(today, 6)), 'yyyy-MM-dd');
+        timeFrom = '00:00';
         break;
       case 'last_year':
         dateFrom = format(startOfDay(subYears(today, 1)), 'yyyy-MM-dd');
@@ -361,8 +478,10 @@ const ActivityLogs = () => {
       case 'clear':
         dateFrom = '';
         dateTo = '';
+        timeFrom = '';
+        timeTo = '';
         setQuickDateFilter('');
-        setFilters(prev => ({ ...prev, date_from: '', date_to: '', page: 1 }));
+        setFilters(prev => ({ ...prev, date_from: '', date_to: '', time_from: '', time_to: '', page: 1 }));
         fetchLogs();
         return;
       default:
@@ -373,7 +492,9 @@ const ActivityLogs = () => {
     setFilters(prev => ({ 
       ...prev, 
       date_from: dateFrom, 
-      date_to: dateTo, 
+      date_to: dateTo,
+      time_from: timeFrom,
+      time_to: timeTo,
       page: 1 
     }));
     fetchLogs();
@@ -741,7 +862,29 @@ const ActivityLogs = () => {
               <p className="text-gray-600 text-sm">Filter and search through activity logs</p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-center">
+              {hasActiveFilters() && (() => {
+                const activeCount = [
+                  filters.user_type !== 'all' && 'User Role',
+                  filters.action && 'Action',
+                  filters.model_type && 'Model',
+                  filters.search && 'Search',
+                  filters.date_from && 'Date',
+                  filters.time_from && 'Time',
+                  filters.ip_address && 'IP',
+                  filters.model_id && 'Model ID',
+                  filters.description_search && 'Description',
+                  filters.status && 'Status',
+                  selectedActions.length > 0 && `${selectedActions.length} Actions`,
+                  selectedModelTypes.length > 0 && `${selectedModelTypes.length} Models`,
+                ].filter(Boolean).length;
+                return (
+                  <div className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold flex items-center gap-2">
+                    <FunnelIcon className="w-4 h-4" />
+                    {activeCount} Active Filter{activeCount !== 1 ? 's' : ''}
+                  </div>
+                );
+              })()}
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
@@ -784,11 +927,46 @@ const ActivityLogs = () => {
           {/* Advanced Filters */}
           {showFilters && (
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 animate-fade-in">
-              <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <FunnelIcon className="w-5 h-5 text-blue-600" />
-                Advanced Filters
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <FunnelIcon className="w-5 h-5 text-blue-600" />
+                  Advanced Filters
+                </h4>
+                <div className="flex gap-2">
+                  {hasActiveFilters() && (
+                    <button
+                      onClick={clearAllFilters}
+                      className="px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2"
+                    >
+                      <XMarkIcon className="w-4 h-4" />
+                      Clear All
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                    className="px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2"
+                  >
+                    {showAdvancedFilters ? 'Hide' : 'Show'} Detailed Filters
+                  </button>
+                </div>
+              </div>
+
+              {/* Basic Filters Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">User Role</label>
+                  <select
+                    value={filters.user_type}
+                    onChange={(e) => handleFilterChange('user_type', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="staff">Staff</option>
+                    <option value="resident">Residents</option>
+                  </select>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Action Type</label>
                   <select
@@ -797,7 +975,7 @@ const ActivityLogs = () => {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">All Actions</option>
-                    {filterOptions.actions.map((action) => (
+                    {filterOptions.actions?.map((action) => (
                       <option key={action} value={action}>{action}</option>
                     ))}
                   </select>
@@ -811,12 +989,29 @@ const ActivityLogs = () => {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">All Models</option>
-                    {filterOptions.model_types.map((type) => (
+                    {filterOptions.model_types?.map((type) => (
                       <option key={type} value={type}>{type}</option>
                     ))}
                   </select>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <select
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Status</option>
+                    <option value="success">Success</option>
+                    <option value="failed">Failed</option>
+                    <option value="pending">Pending</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Date and Time Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Date From</label>
                   <input
@@ -824,7 +1019,7 @@ const ActivityLogs = () => {
                     value={filters.date_from}
                     onChange={(e) => {
                       handleFilterChange('date_from', e.target.value);
-                      setQuickDateFilter(''); // Clear quick filter when manually selecting dates
+                      setQuickDateFilter('');
                     }}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -837,61 +1032,318 @@ const ActivityLogs = () => {
                     value={filters.date_to}
                     onChange={(e) => {
                       handleFilterChange('date_to', e.target.value);
-                      setQuickDateFilter(''); // Clear quick filter when manually selecting dates
+                      setQuickDateFilter('');
                     }}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Time From</label>
+                  <input
+                    type="time"
+                    value={filters.time_from}
+                    onChange={(e) => handleFilterChange('time_from', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Time To</label>
+                  <input
+                    type="time"
+                    value={filters.time_to}
+                    onChange={(e) => handleFilterChange('time_to', e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
+              {/* Detailed Advanced Filters */}
+              {showAdvancedFilters && (
+                <div className="mt-6 pt-6 border-t border-gray-300 bg-white rounded-lg p-6">
+                  <h5 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <FunnelIcon className="w-4 h-4 text-purple-600" />
+                    Detailed Filters
+                  </h5>
+
+                  {/* IP Address and Model ID */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">IP Address</label>
+                      <input
+                        type="text"
+                        value={filters.ip_address}
+                        onChange={(e) => handleFilterChange('ip_address', e.target.value)}
+                        placeholder="e.g., 192.168.1.1"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Model ID</label>
+                      <input
+                        type="text"
+                        value={filters.model_id}
+                        onChange={(e) => handleFilterChange('model_id', e.target.value)}
+                        placeholder="Enter model ID"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Description Search</label>
+                      <input
+                        type="text"
+                        value={filters.description_search}
+                        onChange={(e) => handleFilterChange('description_search', e.target.value)}
+                        placeholder="Search in descriptions"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Items Per Page</label>
+                      <select
+                        value={filters.per_page}
+                        onChange={(e) => handleFilterChange('per_page', parseInt(e.target.value))}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Multiple Action Selection */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">Select Multiple Actions</label>
+                    <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      {filterOptions.actions?.map((action) => (
+                        <button
+                          key={action}
+                          onClick={() => handleActionToggle(action)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 ${
+                            selectedActions.includes(action)
+                              ? 'bg-blue-600 text-white shadow-md'
+                              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
+                          }`}
+                        >
+                          {action}
+                          {selectedActions.includes(action) && (
+                            <XMarkIcon className="w-3 h-3 inline-block ml-1" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    {selectedActions.length > 0 && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        {selectedActions.length} action{selectedActions.length !== 1 ? 's' : ''} selected
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Multiple Model Type Selection */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">Select Multiple Model Types</label>
+                    <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      {filterOptions.model_types?.map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => handleModelTypeToggle(type)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 ${
+                            selectedModelTypes.includes(type)
+                              ? 'bg-purple-600 text-white shadow-md'
+                              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
+                          }`}
+                        >
+                          {type}
+                          {selectedModelTypes.includes(type) && (
+                            <XMarkIcon className="w-3 h-3 inline-block ml-1" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    {selectedModelTypes.length > 0 && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        {selectedModelTypes.length} model type{selectedModelTypes.length !== 1 ? 's' : ''} selected
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Sort Options */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                      <select
+                        value={filters.sort_by}
+                        onChange={(e) => handleFilterChange('sort_by', e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="created_at">Date & Time</option>
+                        <option value="action">Action</option>
+                        <option value="user_id">User</option>
+                        <option value="model_type">Model Type</option>
+                        <option value="ip_address">IP Address</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Sort Order</label>
+                      <select
+                        value={filters.sort_order}
+                        onChange={(e) => handleFilterChange('sort_order', e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="desc">Descending (Newest First)</option>
+                        <option value="asc">Ascending (Oldest First)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Quick Date Filters */}
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                   <CalendarIcon className="w-5 h-5 text-blue-600" />
-                  Quick Date Filters
+                  Quick Date & Time Filters
                 </label>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => handleQuickDateFilter('last_week')}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 ${
-                      quickDateFilter === 'last_week'
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
-                    }`}
-                  >
-                    <CalendarIcon className="w-4 h-4" />
-                    Last Week
-                  </button>
-                  <button
-                    onClick={() => handleQuickDateFilter('last_month')}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 ${
-                      quickDateFilter === 'last_month'
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
-                    }`}
-                  >
-                    <CalendarIcon className="w-4 h-4" />
-                    Last Month
-                  </button>
-                  <button
-                    onClick={() => handleQuickDateFilter('last_year')}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 ${
-                      quickDateFilter === 'last_year'
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
-                    }`}
-                  >
-                    <CalendarIcon className="w-4 h-4" />
-                    Last Year
-                  </button>
-                  {(filters.date_from || filters.date_to) && (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs font-semibold text-gray-500 self-center mr-2">Today/Yesterday:</span>
                     <button
-                      onClick={() => handleQuickDateFilter('clear')}
-                      className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 bg-white text-red-700 border border-red-300 hover:bg-red-50 hover:border-red-400"
+                      onClick={() => handleQuickDateFilter('today')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-1 ${
+                        quickDateFilter === 'today'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                      }`}
                     >
-                      <XMarkIcon className="w-4 h-4" />
-                      Clear Dates
+                      <CalendarIcon className="w-3 h-3" />
+                      Today
                     </button>
+                    <button
+                      onClick={() => handleQuickDateFilter('yesterday')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-1 ${
+                        quickDateFilter === 'yesterday'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                      }`}
+                    >
+                      <CalendarIcon className="w-3 h-3" />
+                      Yesterday
+                    </button>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs font-semibold text-gray-500 self-center mr-2">Recent:</span>
+                    <button
+                      onClick={() => handleQuickDateFilter('last_24_hours')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-1 ${
+                        quickDateFilter === 'last_24_hours'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                      }`}
+                    >
+                      <ClockIcon className="w-3 h-3" />
+                      Last 24 Hours
+                    </button>
+                    <button
+                      onClick={() => handleQuickDateFilter('last_7_days')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-1 ${
+                        quickDateFilter === 'last_7_days'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                      }`}
+                    >
+                      <CalendarIcon className="w-3 h-3" />
+                      Last 7 Days
+                    </button>
+                    <button
+                      onClick={() => handleQuickDateFilter('last_week')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-1 ${
+                        quickDateFilter === 'last_week'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                      }`}
+                    >
+                      <CalendarIcon className="w-3 h-3" />
+                      Last Week
+                    </button>
+                    <button
+                      onClick={() => handleQuickDateFilter('last_30_days')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-1 ${
+                        quickDateFilter === 'last_30_days'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                      }`}
+                    >
+                      <CalendarIcon className="w-3 h-3" />
+                      Last 30 Days
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs font-semibold text-gray-500 self-center mr-2">Longer Periods:</span>
+                    <button
+                      onClick={() => handleQuickDateFilter('last_month')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-1 ${
+                        quickDateFilter === 'last_month'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                      }`}
+                    >
+                      <CalendarIcon className="w-3 h-3" />
+                      Last Month
+                    </button>
+                    <button
+                      onClick={() => handleQuickDateFilter('last_3_months')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-1 ${
+                        quickDateFilter === 'last_3_months'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                      }`}
+                    >
+                      <CalendarIcon className="w-3 h-3" />
+                      Last 3 Months
+                    </button>
+                    <button
+                      onClick={() => handleQuickDateFilter('last_6_months')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-1 ${
+                        quickDateFilter === 'last_6_months'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                      }`}
+                    >
+                      <CalendarIcon className="w-3 h-3" />
+                      Last 6 Months
+                    </button>
+                    <button
+                      onClick={() => handleQuickDateFilter('last_year')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-1 ${
+                        quickDateFilter === 'last_year'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+                      }`}
+                    >
+                      <CalendarIcon className="w-3 h-3" />
+                      Last Year
+                    </button>
+                  </div>
+
+                  {(filters.date_from || filters.date_to) && (
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+                      <button
+                        onClick={() => handleQuickDateFilter('clear')}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 bg-white text-red-700 border border-red-300 hover:bg-red-50 hover:border-red-400"
+                      >
+                        <XMarkIcon className="w-4 h-4" />
+                        Clear All Dates
+                      </button>
+                    </div>
                   )}
                 </div>
                 {(filters.date_from || filters.date_to) && (

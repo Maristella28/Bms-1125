@@ -274,6 +274,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'sanitize'])->group
     // 🧑‍💼 User Management (Admin only)
     Route::post('/register', [AuthController::class, 'register']);
     Route::delete('/user/{id}', [AuthController::class, 'deleteUser']);
+    Route::get('/admins', [AdminController::class, 'admins']);
     
     // 📊 Dashboard (Admin only for now - could be shared later)
     Route::get('/dashboard', [AdminController::class, 'index']);

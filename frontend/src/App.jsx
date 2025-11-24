@@ -62,6 +62,7 @@ const RequestAssets = lazy(() => import('./pages/residents/modules/Assets/Reques
 const StatusAssetRequests = lazy(() => import('./pages/residents/modules/Assets/StatusAssetRequests'));
 // Admin Staff Management (for permissions)
 const StaffManagement = lazy(() => import('./pages/admin/modules/Staff/StaffManagement'));
+const UserManagement = lazy(() => import('./pages/admin/modules/Users/UserManagement'));
 // Organizational Chart Staff Management (different component)
 const OrgChartStaffManagement = lazy(() => import('./pages/admin/modules/Barangay Officials/StaffManagements'));
 // Staff Profile component
@@ -329,6 +330,7 @@ function App() {
           <Route path="/admin/modules/Blotter/OngoingCases" element={<RoleBasedRoute allowedRoles={['admin', 'staff']}><AdminRouteWrapper>{withSuspense(<OngoingCases />)}</AdminRouteWrapper></RoleBasedRoute>} />
           
           {/* Staff and Officials Management Routes */}
+          <Route path="/admin/users" element={<RoleBasedRoute allowedRoles={['admin']}><AdminRouteWrapper>{withSuspense(<UserManagement />)}</AdminRouteWrapper></RoleBasedRoute>} />
           <Route path="/admin/staff-management" element={<RoleBasedRoute allowedRoles={['admin']}><AdminRouteWrapper>{withSuspense(<StaffManagement />)}</AdminRouteWrapper></RoleBasedRoute>} />
           <Route path="/admin/officials-management" element={<RoleBasedRoute allowedRoles={['admin']}><AdminRouteWrapper>{withSuspense(<OfficialsManagement />)}</AdminRouteWrapper></RoleBasedRoute>} />
           <Route path="/admin/org-staff-management" element={<RoleBasedRoute allowedRoles={['admin']}><AdminRouteWrapper>{withSuspense(<OrgChartStaffManagement />)}</AdminRouteWrapper></RoleBasedRoute>} />

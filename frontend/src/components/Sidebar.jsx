@@ -146,9 +146,9 @@ const Sidebar = ({ permissions: propPermissions = {} }) => {
       module: "blotter"
     },
     { 
-      title: "Staff Management", 
+      title: "User Management", 
       icon: <Users size={iconSize} />, 
-      path: `/${userRole}/staff`,
+      path: `/${userRole}/users`,
       module: "staff"
     },
     { 

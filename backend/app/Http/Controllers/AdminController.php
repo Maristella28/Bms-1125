@@ -150,4 +150,62 @@ class AdminController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * 👨‍💼 Get all users with 'admin' role
+     * Accessible by: Admin users only
+     */
+    public function admins(Request $request)
+    {
+        \Log::info('AdminController::admins method called');
+        
+        try {
+            $user = Auth::user();
+            
+            if (!$user || $user->role !== 'admin') {
+                return response()->json([
+                    'message' => 'Unauthorized. Only admins can view admin users.'
+                ], 403);
+            }
+            
+            // Get pagination parameters
+            $perPage = $request->get('per_page', 50);
+            $page = $request->get('page', 1);
+            
+            // Fetch admin users
+            $users = User::where('role', 'admin')
+                ->select('id', 'name', 'email', 'created_at', 'active', 'status')
+                ->orderBy('name')
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            \Log::info('Found users with admin role', [
+                'count' => $users->count(),
+                'total' => $users->total(),
+                'per_page' => $perPage,
+                'current_page' => $page
+            ]);
+
+            return response()->json([
+                'users' => $users->items(),
+                'pagination' => [
+                    'current_page' => $users->currentPage(),
+                    'last_page' => $users->lastPage(),
+                    'per_page' => $users->perPage(),
+                    'total' => $users->total(),
+                    'from' => $users->firstItem(),
+                    'to' => $users->lastItem()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in AdminController::admins', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to fetch admin users',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
